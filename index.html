@@ -1,0 +1,1241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<title>ES ALPHA v5 — AI Trading Companion</title>
+<!--
+  ES ALPHA v5 — GITHUB PAGES COMPATIBLE
+  - Zero external font dependencies (system fonts only)
+  - TradingView via direct iframe (no tv.js script)
+  - All CSS inline, no @import
+  - DOMContentLoaded wrapper on all JS
+  - Tested: Chrome, Firefox, Safari, Edge
+  - Works: GitHub Pages, file://, any web server
+-->
+<style>
+/* ═══ RESET ═══ */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%;}
+
+/* ═══ FONTS — system stack, no external call ═══ */
+:root {
+  --font-mono: "Courier New", Courier, monospace;
+  --font-ui: "Segoe UI", system-ui, -apple-system, sans-serif;
+  --font-display: "Segoe UI", system-ui, -apple-system, sans-serif;
+
+  /* COLORS */
+  --bg: #02040a;
+  --panel: #06090f;
+  --border: #0d1e38;
+  --accent: #00d4ff;
+  --green: #00ff9d;
+  --red: #ff3358;
+  --gold: #ffb800;
+  --purple: #a855f7;
+  --warn: #ff7300;
+  --dim: #121e30;
+  --dim2: #0a1220;
+  --text: #b8cce0;
+  --muted: #3a5570;
+  --bright: #e0f0ff;
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  min-height: 100vh;
+  overflow-x: hidden;
+  background-image:
+    radial-gradient(ellipse at 10% 0%, rgba(0,80,160,0.12) 0%, transparent 55%),
+    radial-gradient(ellipse at 90% 100%, rgba(0,30,80,0.15) 0%, transparent 55%);
+}
+
+/* ═══ ANIMATIONS ═══ */
+@-webkit-keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.55} }
+@keyframes pulse           { 0%,100%{opacity:1} 50%{opacity:.55} }
+@-webkit-keyframes blink  { 0%,100%{opacity:1} 50%{opacity:0} }
+@keyframes blink           { 0%,100%{opacity:1} 50%{opacity:0} }
+@-webkit-keyframes glowp  { 0%,100%{box-shadow:0 0 6px rgba(0,255,157,.3)} 50%{box-shadow:0 0 18px rgba(0,255,157,.7)} }
+@keyframes glowp           { 0%,100%{box-shadow:0 0 6px rgba(0,255,157,.3)} 50%{box-shadow:0 0 18px rgba(0,255,157,.7)} }
+@-webkit-keyframes slidein { from{-webkit-transform:translateY(-6px);transform:translateY(-6px);opacity:0} to{-webkit-transform:none;transform:none;opacity:1} }
+@keyframes slidein         { from{transform:translateY(-6px);opacity:0} to{transform:none;opacity:1} }
+
+.blink   { -webkit-animation:blink 1s step-end infinite; animation:blink 1s step-end infinite; }
+.pulse-a { -webkit-animation:pulse 2s infinite; animation:pulse 2s infinite; }
+.glow-a  { -webkit-animation:glowp 3s infinite; animation:glowp 3s infinite; }
+
+/* ═══ HEADER ═══ */
+#hdr {
+  display:-webkit-box; display:-ms-flexbox; display:flex;
+  -webkit-box-align:center; -ms-flex-align:center; align-items:center;
+  -webkit-box-pack:justify; -ms-flex-pack:justify; justify-content:space-between;
+  padding:10px 20px;
+  border-bottom:1px solid var(--border);
+  background:linear-gradient(90deg, rgba(0,212,255,.04), transparent, rgba(155,89,255,.04));
+  position:-webkit-sticky; position:sticky; top:0; z-index:500;
+  background-color:rgba(2,4,10,.92);
+}
+.logo-icon {
+  width:38px; height:38px; border:1px solid var(--accent); border-radius:6px;
+  display:-webkit-inline-box; display:-ms-inline-flexbox; display:inline-flex;
+  -webkit-box-align:center; -ms-flex-align:center; align-items:center;
+  -webkit-box-pack:center; -ms-flex-pack:center; justify-content:center;
+  background:rgba(0,212,255,.08); font-size:18px; margin-right:12px;
+}
+.logo-text {
+  font-family:var(--font-display); font-size:18px; font-weight:900;
+  color:var(--accent); letter-spacing:3px;
+  text-shadow:0 0 12px rgba(0,212,255,.4);
+}
+.logo-text b { color:var(--gold); }
+.logo-sub { font-size:9px; color:var(--muted); letter-spacing:3px; margin-top:2px; }
+.ai-badge {
+  display:-webkit-inline-box; display:-ms-inline-flexbox; display:inline-flex;
+  -webkit-box-align:center; -ms-flex-align:center; align-items:center; gap:8px;
+  padding:6px 14px; border:1px solid rgba(0,255,157,.3); border-radius:20px;
+  background:rgba(0,255,157,.06); font-size:9px; letter-spacing:2px; color:var(--green);
+}
+.ai-dot { width:7px; height:7px; border-radius:50%; background:var(--green); display:inline-block; box-shadow:0 0 8px var(--green); }
+.hdr-r { display:-webkit-box; display:-ms-flexbox; display:flex; gap:16px; -webkit-box-align:center; -ms-flex-align:center; align-items:center; }
+.hdr-stat .lbl { font-size:8px; color:var(--muted); letter-spacing:2px; font-weight:600; text-transform:uppercase; }
+.hdr-stat .val { font-family:var(--font-mono); font-size:14px; color:var(--bright); }
+#clock { font-family:var(--font-mono); font-size:20px; color:var(--green); }
+.s-pill {
+  padding:4px 12px; border-radius:3px; border:1px solid var(--green);
+  font-size:9px; font-weight:700; letter-spacing:2px; color:var(--green);
+  background:rgba(0,255,157,.07);
+}
+
+/* ═══ NAV ═══ */
+#nav {
+  display:-webkit-box; display:-ms-flexbox; display:flex;
+  border-bottom:1px solid var(--border);
+  background:rgba(2,4,10,.85);
+  overflow-x:auto; -webkit-overflow-scrolling:touch;
+  position:-webkit-sticky; position:sticky; top:62px; z-index:499;
+}
+#nav::-webkit-scrollbar { height:2px; }
+#nav::-webkit-scrollbar-thumb { background:var(--dim); }
+.ntab {
+  padding:9px 16px; font-size:9px; letter-spacing:2px; font-weight:700;
+  cursor:pointer; color:var(--muted); border-bottom:2px solid transparent;
+  -webkit-transition:all .2s; transition:all .2s; white-space:nowrap;
+  -webkit-box-flex:0; -ms-flex-negative:0; flex-shrink:0;
+  display:-webkit-inline-box; display:-ms-inline-flexbox; display:inline-flex;
+  -webkit-box-align:center; -ms-flex-align:center; align-items:center; gap:6px;
+  font-family:var(--font-ui);
+  background:none; border-top:none; border-left:none; border-right:none;
+  text-transform:uppercase;
+}
+.ntab:hover { color:var(--text); background:rgba(0,212,255,.03); }
+.ntab.active { color:var(--accent); border-bottom-color:var(--accent); background:rgba(0,212,255,.05); }
+.nbadge {
+  padding:1px 5px; border-radius:2px; font-size:7px; font-weight:700;
+  background:rgba(255,184,0,.15); color:var(--gold); border:1px solid rgba(255,184,0,.3);
+}
+
+/* ═══ PAGES ═══ */
+.page { display:none; }
+.page.active { display:block; }
+
+/* ═══ GRID ═══ */
+.g3 { display:-ms-grid; display:grid; -ms-grid-columns:280px 10px 1fr 10px 280px; grid-template-columns:280px 1fr 280px; gap:10px; padding:10px; }
+.g2 { display:-ms-grid; display:grid; -ms-grid-columns:1fr 10px 1fr; grid-template-columns:1fr 1fr; gap:10px; padding:10px; }
+.g4 { display:-ms-grid; display:grid; -ms-grid-columns:1fr 10px 1fr 10px 1fr 10px 1fr; grid-template-columns:repeat(4,1fr); gap:10px; padding:10px 10px 0; }
+.gfull { padding:10px; }
+.col { display:-webkit-box; display:-ms-flexbox; display:flex; -webkit-box-orient:vertical; -webkit-box-direction:normal; -ms-flex-direction:column; flex-direction:column; gap:10px; }
+
+/* ═══ PANEL ═══ */
+.panel { background:var(--panel); border:1px solid var(--border); border-radius:5px; overflow:hidden; margin-bottom:10px; }
+.panel:last-child { margin-bottom:0; }
+.ph {
+  padding:7px 14px; border-bottom:1px solid var(--border);
+  display:-webkit-box; display:-ms-flexbox; display:flex;
+  -webkit-box-pack:justify; -ms-flex-pack:justify; justify-content:space-between;
+  -webkit-box-align:center; -ms-flex-align:center; align-items:center;
+  background:rgba(0,212,255,.02);
+}
+.ph-t { font-size:10px; font-weight:700; letter-spacing:2px; color:var(--accent); text-transform:uppercase; }
+.ph-t.gold { color:var(--gold); }
+.ph-t.green { color:var(--green); }
+.ph-t.purple { color:var(--purple); }
+.ph-t.red { color:var(--red); }
+.pb { padding:12px; }
+
+/* ═══ SCORE BARS ═══ */
+.sbar-row { display:-webkit-box; display:-ms-flexbox; display:flex; -webkit-box-align:center; -ms-flex-align:center; align-items:center; gap:8px; margin:5px 0; }
+.sbar-lbl { width:110px; font-size:9px; color:var(--muted); letter-spacing:1px; text-transform:uppercase; font-weight:600; }
+.sbar-track { -webkit-box-flex:1; -ms-flex:1; flex:1; height:6px; background:var(--dim); border-radius:3px; overflow:hidden; }
+.sbar-fill { height:100%; border-radius:3px; -webkit-transition:width 1s ease; transition:width 1s ease; }
+.sf-r { background:linear-gradient(90deg,var(--red),#ff8080); }
+.sf-g { background:linear-gradient(90deg,var(--green),#80ffcc); }
+.sf-o { background:linear-gradient(90deg,var(--gold),#ffdd80); }
+.sf-b { background:linear-gradient(90deg,var(--accent),#80e8ff); }
+.sf-p { background:linear-gradient(90deg,var(--purple),#d0a8ff); }
+.sbar-num { width:36px; text-align:right; font-family:var(--font-mono); font-size:11px; }
+
+/* ═══ RANGE ROWS ═══ */
+.rr { display:-webkit-box; display:-ms-flexbox; display:flex; -webkit-box-align:center; -ms-flex-align:center; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid var(--dim); }
+.rr:last-child { border-bottom:none; }
+.rf { font-size:18px; width:26px; text-align:center; }
+.ri { -webkit-box-flex:1; -ms-flex:1; flex:1; }
+.rn { font-size:9px; color:var(--muted); letter-spacing:1px; font-weight:600; text-transform:uppercase; }
+.rl { font-family:var(--font-mono); font-size:12px; margin-top:2px; }
+.rl .h { color:var(--green); } .rl .l { color:var(--red); }
+.rbias { font-size:9px; font-weight:700; padding:3px 9px; border-radius:2px; letter-spacing:1px; }
+.rb-bear { color:var(--red); background:rgba(255,51,88,.1); border:1px solid rgba(255,51,88,.3); }
+.rb-bull { color:var(--green); background:rgba(0,255,157,.1); border:1px solid rgba(0,255,157,.3); }
+
+/* ═══ LEVELS ═══ */
+.lv { display:-webkit-box; display:-ms-flexbox; display:flex; -webkit-box-pack:justify; -ms-flex-pack:justify; justify-content:space-between; -webkit-box-align:center; -ms-flex-align:center; align-items:center; padding:6px 10px; border-left:3px solid; margin:3px 0; background:rgba(0,0,0,.15); border-radius:0 3px 3px 0; }
+.lv.r { border-color:var(--red); } .lv.s { border-color:var(--green); }
+.lv.p { border-color:var(--gold); } .lv.v { border-color:var(--accent); }
+.lv.pu { border-color:var(--purple); }
+.ln { font-size:9px; color:var(--muted); letter-spacing:1px; font-weight:600; text-transform:uppercase; }
+.lp { font-family:var(--font-mono); font-size:14px; }
+.lv.r .lp { color:var(--red); } .lv.s .lp { color:var(--green); }
+.lv.p .lp { color:var(--gold); } .lv.v .lp { color:var(--accent); }
+.lv.pu .lp { color:var(--purple); }
+
+/* ═══ SIGNAL BOX ═══ */
+.sig-box { border:2px solid; border-radius:6px; padding:14px; margin-bottom:12px; position:relative; overflow:hidden; }
+.sig-box::before { content:''; position:absolute; inset:0; opacity:.05; pointer-events:none; }
+.sig-box.short { border-color:var(--red); }
+.sig-box.short::before { background:var(--red); }
+.sig-box.long { border-color:var(--green); }
+.sig-box.long::before { background:var(--green); }
+.sig-box.wait { border-color:var(--gold); }
+.sig-box.wait::before { background:var(--gold); }
+.sig-dir { font-size:26px; font-weight:900; letter-spacing:2px; }
+.sig-dir.short { color:var(--red); text-shadow:0 0 12px rgba(255,51,88,.5); }
+.sig-dir.long  { color:var(--green); text-shadow:0 0 12px rgba(0,255,157,.5); }
+.sig-dir.wait  { color:var(--gold); text-shadow:0 0 12px rgba(255,184,0,.5); }
+.conf-ring {
+  width:68px; height:68px; border-radius:50%; border:3px solid;
+  display:-webkit-box; display:-ms-flexbox; display:flex;
+  -webkit-box-align:center; -ms-flex-align:center; align-items:center;
+  -webkit-box-pack:center; -ms-flex-pack:center; justify-content:center;
+  -webkit-box-orient:vertical; -webkit-box-direction:normal;
+  -ms-flex-direction:column; flex-direction:column;
+}
+.conf-ring.hi { border-color:var(--green); }
+.conf-ring.me { border-color:var(--gold); }
+.conf-ring.lo { border-color:var(--red); }
+.conf-pct { font-family:var(--font-mono); font-size:18px; font-weight:700; }
+.conf-pct.hi { color:var(--green); } .conf-pct.me { color:var(--gold); } .conf-pct.lo { color:var(--red); }
+.conf-lbl { font-size:7px; color:var(--muted); letter-spacing:1px; text-transform:uppercase; }
+.egrid3 { display:-ms-grid; display:grid; -ms-grid-columns:1fr 8px 1fr 8px 1fr; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-top:10px; }
+.egrid2 { display:-ms-grid; display:grid; -ms-grid-columns:1fr 8px 1fr; grid-template-columns:1fr 1fr; gap:8px; margin-top:8px; }
+.eg-cell { text-align:center; padding:8px; border-radius:4px; background:rgba(0,0,0,.3); }
+.eg-lbl { font-size:8px; color:var(--muted); letter-spacing:2px; text-transform:uppercase; font-weight:600; }
+.eg-val { font-family:var(--font-mono); font-size:13px; margin-top:3px; }
+
+/* ═══ CONDITIONS ═══ */
+.cond-grid { display:-ms-grid; display:grid; -ms-grid-columns:1fr 6px 1fr; grid-template-columns:1fr 1fr; gap:5px; margin-top:8px; }
+.ci-row {
+  display:-webkit-box; display:-ms-flexbox; display:flex; -webkit-box-align:center; -ms-flex-align:center; align-items:center; gap:8px;
+  padding:6px 9px; border:1px solid var(--dim); border-radius:4px;
+  background:rgba(0,0,0,.2); -webkit-transition:border-color .2s; transition:border-color .2s;
+}
+.ci-row.pass { border-color:rgba(0,255,157,.3); background:rgba(0,255,157,.04); }
+.ci-row.fail { border-color:rgba(255,51,88,.25); background:rgba(255,51,88,.04); }
+.ci-row.warn { border-color:rgba(255,184,0,.3); background:rgba(255,184,0,.04); }
+.cdot { width:8px; height:8px; border-radius:50%; -webkit-flex-shrink:0; flex-shrink:0; }
+.cdot.pass { background:var(--green); box-shadow:0 0 6px var(--green); }
+.cdot.fail { background:var(--red); box-shadow:0 0 6px var(--red); }
+.cdot.warn { background:var(--gold); box-shadow:0 0 6px var(--gold); }
+.cdot.dim  { background:var(--muted); }
+.cn { -webkit-box-flex:1; -ms-flex:1; flex:1; font-size:11px; font-weight:600; }
+.cv { font-family:var(--font-mono); font-size:10px; }
+
+/* ═══ CHIPS ═══ */
+.chip { display:inline-block; padding:2px 7px; border-radius:2px; font-size:8px; font-weight:700; letter-spacing:1px; margin:2px; text-transform:uppercase; border:1px solid; }
+.cg { background:rgba(0,255,157,.1); color:var(--green); border-color:rgba(0,255,157,.3); }
+.cr { background:rgba(255,51,88,.1); color:var(--red); border-color:rgba(255,51,88,.3); }
+.co { background:rgba(255,184,0,.1); color:var(--gold); border-color:rgba(255,184,0,.3); }
+.cb { background:rgba(0,212,255,.1); color:var(--accent); border-color:rgba(0,212,255,.3); }
+.cp { background:rgba(168,85,247,.1); color:var(--purple); border-color:rgba(168,85,247,.3); }
+
+/* ═══ ALERTS ═══ */
+.alert {
+  display:-webkit-box; display:-ms-flexbox; display:flex;
+  -webkit-box-align:flex-start; -ms-flex-align:flex-start; align-items:flex-start;
+  gap:10px; padding:10px 12px; margin:6px 0; border-radius:4px; border:1px solid;
+  font-size:12px; line-height:1.5;
+}
+.ai-ico { font-size:15px; -webkit-flex-shrink:0; flex-shrink:0; margin-top:1px; }
+.ad { border-color:rgba(255,51,88,.4); color:var(--red); background:rgba(255,51,88,.07); }
+.ai { border-color:rgba(0,212,255,.3); color:var(--accent); background:rgba(0,212,255,.05); }
+.aw { border-color:rgba(255,115,0,.4); color:var(--warn); background:rgba(255,115,0,.07); }
+.ag { border-color:rgba(0,255,157,.3); color:var(--green); background:rgba(0,255,157,.06); }
+.ap { border-color:rgba(168,85,247,.3); color:var(--purple); background:rgba(168,85,247,.06); }
+
+/* ═══ DIVIDERS ═══ */
+.div { height:1px; background:var(--dim); margin:10px 0; }
+.div-lbl {
+  display:-webkit-box; display:-ms-flexbox; display:flex;
+  -webkit-box-align:center; -ms-flex-align:center; align-items:center; gap:10px;
+  margin:12px 0; font-size:9px; color:var(--muted); letter-spacing:2px; font-weight:600; text-transform:uppercase;
+}
+.div-lbl::before,.div-lbl::after { content:''; -webkit-box-flex:1; -ms-flex:1; flex:1; height:1px; background:var(--dim); }
+
+/* ═══ STEPS ═══ */
+.step { display:-webkit-box; display:-ms-flexbox; display:flex; gap:10px; margin:8px 0; -webkit-box-align:flex-start; -ms-flex-align:flex-start; align-items:flex-start; }
+.snum {
+  width:24px; height:24px; border-radius:50%; border:1px solid;
+  display:-webkit-box; display:-ms-flexbox; display:flex;
+  -webkit-box-align:center; -ms-flex-align:center; align-items:center;
+  -webkit-box-pack:center; -ms-flex-pack:center; justify-content:center;
+  font-size:10px; font-weight:700; -webkit-flex-shrink:0; flex-shrink:0; margin-top:1px;
+}
+.snum.bl { border-color:var(--accent); color:var(--accent); background:rgba(0,212,255,.1); }
+.snum.go { border-color:var(--gold); color:var(--gold); background:rgba(255,184,0,.1); }
+.snum.re { border-color:var(--red); color:var(--red); background:rgba(255,51,88,.1); }
+.snum.pu { border-color:var(--purple); color:var(--purple); background:rgba(168,85,247,.1); }
+.stxt { font-size:12px; line-height:1.65; }
+.stxt strong { color:var(--gold); }
+
+/* ═══ LIQ ZONES ═══ */
+.liq-zone { padding:10px 12px; border-left:3px solid; border-radius:0 4px 4px 0; margin:5px 0; background:rgba(0,0,0,.2); }
+.liq-zone.buy { border-color:var(--green); }
+.liq-zone.sell { border-color:var(--red); }
+.liq-zone.swept { border-color:var(--muted); opacity:.6; }
+.lq-lbl { font-size:8px; color:var(--muted); letter-spacing:2px; text-transform:uppercase; font-weight:600; }
+.lq-price { font-family:var(--font-mono); font-size:15px; margin:3px 0; }
+.lq-desc { font-size:11px; color:var(--muted); line-height:1.5; }
+.tag { display:inline-block; padding:1px 7px; border-radius:2px; font-size:7px; font-weight:700; letter-spacing:1px; margin-left:6px; border:1px solid; text-transform:uppercase; }
+.tag-hunt   { background:rgba(255,184,0,.15); color:var(--gold); border-color:rgba(255,184,0,.4); }
+.tag-swept  { background:rgba(100,100,100,.15); color:var(--muted); border-color:var(--dim); }
+.tag-active { background:rgba(255,51,88,.15); color:var(--red); border-color:rgba(255,51,88,.4); }
+.tag-target { background:rgba(0,255,157,.12); color:var(--green); border-color:rgba(0,255,157,.3); }
+
+/* ═══ BACKTEST TABLE ═══ */
+.bt-tbl { width:100%; border-collapse:collapse; font-size:11px; }
+.bt-tbl th { font-size:8px; letter-spacing:2px; color:var(--muted); padding:8px 10px; border-bottom:1px solid var(--border); text-align:left; background:rgba(0,0,0,.3); text-transform:uppercase; font-weight:700; }
+.bt-tbl td { padding:7px 10px; border-bottom:1px solid var(--dim); font-family:var(--font-mono); font-size:11px; }
+.bt-tbl tr:hover td { background:rgba(0,212,255,.03); }
+.bt-tbl tr:last-child td { border-bottom:none; }
+.bt-win { color:var(--green); } .bt-loss { color:var(--red); }
+.bt-day { color:var(--bright); font-family:var(--font-mono); }
+.bt-setup { color:var(--accent); font-size:10px; font-family:var(--font-ui); font-weight:700; letter-spacing:1px; text-transform:uppercase; }
+.grade { display:inline-block; padding:2px 8px; border-radius:2px; font-size:9px; font-weight:700; letter-spacing:1px; border:1px solid; text-transform:uppercase; }
+.grade.A { background:rgba(0,255,157,.12); color:var(--green); border-color:rgba(0,255,157,.3); }
+.grade.B { background:rgba(0,212,255,.12); color:var(--accent); border-color:rgba(0,212,255,.3); }
+.grade.C { background:rgba(255,184,0,.12); color:var(--gold); border-color:rgba(255,184,0,.3); }
+.grade.F { background:rgba(255,51,88,.12); color:var(--red); border-color:rgba(255,51,88,.3); }
+
+/* ═══ ORB PHASES ═══ */
+.orb-phases { display:-ms-grid; display:grid; -ms-grid-columns:1fr 1px 1fr 1px 1fr 1px 1fr; grid-template-columns:repeat(4,1fr); }
+.orb-phase { padding:12px; text-align:center; border-right:1px solid var(--border); }
+.orb-phase:last-child { border-right:none; }
+.op-num { font-size:9px; color:var(--muted); letter-spacing:1px; text-transform:uppercase; font-weight:600; }
+.op-time { font-family:var(--font-mono); font-size:11px; color:var(--accent); margin:3px 0; }
+.op-title { font-size:10px; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:5px; }
+.op-desc { font-size:10px; color:var(--muted); line-height:1.5; }
+.ph-done { background:rgba(0,255,157,.03); }
+.ph-done .op-title { color:var(--green); }
+.ph-active { background:rgba(0,212,255,.05); }
+.ph-active .op-title { color:var(--accent); }
+.ph-wait .op-title { color:var(--muted); }
+
+/* ═══ STRAT TABS ═══ */
+.stab-bar { display:-webkit-box; display:-ms-flexbox; display:flex; border-bottom:1px solid var(--border); overflow-x:auto; -webkit-overflow-scrolling:touch; }
+.stab-bar::-webkit-scrollbar { height:2px; }
+.stab { padding:7px 14px; font-size:9px; letter-spacing:2px; cursor:pointer; color:var(--muted); border-bottom:2px solid transparent; -webkit-transition:all .2s; transition:all .2s; white-space:nowrap; text-transform:uppercase; font-weight:700; background:none; border-top:none; border-left:none; border-right:none; font-family:var(--font-ui); }
+.stab.active { color:var(--accent); border-bottom-color:var(--accent); background:rgba(0,212,255,.04); }
+.stab:hover:not(.active) { color:var(--text); }
+.sc { display:none; padding:14px; }
+.sc.active { display:block; }
+
+/* ═══ P&L ═══ */
+.pbar { height:12px; background:var(--dim); border-radius:6px; overflow:hidden; margin:8px 0; }
+.pfill { height:100%; border-radius:6px; background:linear-gradient(90deg,var(--green),#00ffcc); -webkit-transition:width 1s; transition:width 1s; }
+.tlog { max-height:130px; overflow-y:auto; margin-top:8px; }
+.tlog::-webkit-scrollbar { width:3px; }
+.tlog::-webkit-scrollbar-thumb { background:var(--muted); }
+.te { display:-webkit-box; display:-ms-flexbox; display:flex; gap:8px; padding:5px 0; border-bottom:1px solid var(--dim); font-family:var(--font-mono); font-size:11px; -webkit-box-align:center; -ms-flex-align:center; align-items:center; }
+.te:last-child { border-bottom:none; }
+
+/* ═══ STAT BOXES ═══ */
+.stat-grid { display:-ms-grid; display:grid; -ms-grid-columns:1fr 8px 1fr; grid-template-columns:1fr 1fr; gap:8px; }
+.stat-box { border:1px solid var(--dim); border-radius:4px; padding:10px; text-align:center; }
+.sb-lbl { font-size:8px; color:var(--muted); letter-spacing:2px; text-transform:uppercase; font-weight:600; }
+.sb-val { font-family:var(--font-mono); font-size:18px; margin-top:4px; }
+
+/* ═══ CHECKLIST ═══ */
+.check-item { display:-webkit-box; display:-ms-flexbox; display:flex; gap:10px; -webkit-box-align:center; -ms-flex-align:center; align-items:center; padding:6px 0; font-size:12px; cursor:pointer; border-bottom:1px solid rgba(255,255,255,.03); -webkit-user-select:none; -moz-user-select:none; -ms-user-select:none; user-select:none; }
+.check-item:last-child { border-bottom:none; }
+.chk { width:18px; height:18px; border:1px solid var(--muted); border-radius:3px; display:-webkit-box; display:-ms-flexbox; display:flex; -webkit-box-align:center; -ms-flex-align:center; align-items:center; -webkit-box-pack:center; -ms-flex-pack:center; justify-content:center; font-size:11px; -webkit-flex-shrink:0; flex-shrink:0; -webkit-transition:all .2s; transition:all .2s; }
+.chk.on { background:var(--green); border-color:var(--green); color:#000; font-weight:700; }
+
+/* ═══ INPUTS ═══ */
+select, input[type="number"], input[type="text"] {
+  background:var(--dim); border:1px solid var(--border); color:var(--text);
+  padding:7px 10px; border-radius:4px; font-family:var(--font-mono);
+  font-size:12px; outline:none; width:100%;
+  -webkit-appearance:none; -moz-appearance:none; appearance:none;
+}
+select { background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%233a5570'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 10px center; padding-right:28px; }
+select:focus, input:focus { border-color:var(--accent); }
+.btn { padding:8px 16px; border-radius:4px; cursor:pointer; font-size:9px; letter-spacing:2px; font-weight:700; -webkit-transition:all .2s; transition:all .2s; border:1px solid; font-family:var(--font-ui); text-transform:uppercase; }
+.btn-p { background:rgba(0,212,255,.1); border-color:var(--accent); color:var(--accent); }
+.btn-p:hover { background:rgba(0,212,255,.2); }
+.btn-g { background:rgba(0,255,157,.1); border-color:var(--green); color:var(--green); }
+.btn-g:hover { background:rgba(0,255,157,.2); }
+.btn-r { background:rgba(255,51,88,.1); border-color:var(--red); color:var(--red); }
+
+/* ═══ CHART ═══ */
+.chart-wrap { border:1px solid var(--border); border-radius:5px; overflow:hidden; margin-bottom:10px; }
+.chart-ph { padding:7px 14px; border-bottom:1px solid var(--border); display:-webkit-box; display:-ms-flexbox; display:flex; -webkit-box-pack:justify; -ms-flex-pack:justify; justify-content:space-between; -webkit-box-align:center; -ms-flex-align:center; align-items:center; background:rgba(0,0,0,.4); }
+.chart-title { font-size:10px; font-weight:700; letter-spacing:2px; color:var(--accent); text-transform:uppercase; }
+iframe { display:block; border:none; width:100%; }
+
+/* ═══ OBR CALC RESULT ═══ */
+#orbResult { font-size:12px; line-height:2; }
+
+/* ═══ SCROLLBAR ═══ */
+::-webkit-scrollbar { width:4px; height:4px; }
+::-webkit-scrollbar-track { background:var(--bg); }
+::-webkit-scrollbar-thumb { background:var(--dim); border-radius:2px; }
+::-webkit-scrollbar-thumb:hover { background:var(--muted); }
+
+/* ═══ RESPONSIVE (min support) ═══ */
+@media (max-width:1200px) {
+  .g3 { grid-template-columns:1fr 1fr; }
+  .g3 > .col:last-child { grid-column:1/-1; display:grid; grid-template-columns:1fr 1fr; }
+}
+@media (max-width:768px) {
+  .g3,.g2,.g4 { grid-template-columns:1fr; }
+  .g3 > .col:last-child { grid-column:auto; display:block; }
+  .orb-phases { grid-template-columns:1fr 1fr; }
+  .hdr-r > *:not(:first-child) { display:none; }
+}
+</style>
+</head>
+<body>
+
+<!-- ══════ HEADER ══════ -->
+<div id="hdr">
+  <div style="display:flex;align-items:center;">
+    <div class="logo-icon">⚡</div>
+    <div>
+      <div class="logo-text">ES <b>ALPHA</b> <span style="font-size:12px;color:var(--muted);">v5</span></div>
+      <div class="logo-sub">AI Trading Companion · Funded Trader · GitHub Ready</div>
+    </div>
+  </div>
+  <div style="display:flex;align-items:center;gap:12px;">
+    <div class="ai-badge glow-a"><span class="ai-dot"></span> AI COMPANION ACTIVE</div>
+  </div>
+  <div class="hdr-r">
+    <div class="hdr-stat"><div class="lbl">Session</div><div id="sessionPill" class="s-pill pulse-a">🟢 US OPEN</div></div>
+    <div class="hdr-stat"><div class="lbl">ET Time</div><div id="clock" class="val">--:--:--</div></div>
+    <div class="hdr-stat"><div class="lbl">P&L Today</div><div id="hdrPnl" class="val" style="color:var(--green);">+$0</div></div>
+    <div class="hdr-stat"><div class="lbl">Target</div><div class="val" style="color:var(--gold);">$500</div></div>
+  </div>
+</div>
+
+<!-- ══════ NAV ══════ -->
+<div id="nav">
+  <button class="ntab active" onclick="goPage('signal',this)">⚡ AI Signal</button>
+  <button class="ntab" onclick="goPage('orb',this)">📐 ORB Engine <span class="nbadge">5-MIN</span></button>
+  <button class="ntab" onclick="goPage('inst',this)">🏦 Institutional <span class="nbadge">Liquidity</span></button>
+  <button class="ntab" onclick="goPage('bt',this)">📊 Backtest <span class="nbadge">5-Day</span></button>
+  <button class="ntab" onclick="goPage('play',this)">📖 Playbook</button>
+  <button class="ntab" onclick="goPage('pnl',this)">💰 P&amp;L Tracker</button>
+  <button class="ntab" onclick="goPage('analysis',this)">🌐 Analysis</button>
+</div>
+
+<!-- ══════════════════════════════════════
+     PAGE 1 — AI SIGNAL
+══════════════════════════════════════ -->
+<div class="page active" id="page-signal">
+<div class="g3">
+
+  <!-- LEFT -->
+  <div class="col">
+    <div class="panel">
+      <div class="ph"><span class="ph-t">◈ Market Bias Score</span></div>
+      <div class="pb">
+        <div style="text-align:center;padding:10px 0;">
+          <div style="font-size:9px;color:var(--muted);letter-spacing:3px;margin-bottom:6px;font-weight:700;text-transform:uppercase;">Overall Directional Bias</div>
+          <div style="font-family:var(--font-mono);font-size:40px;color:var(--red);text-shadow:0 0 15px rgba(255,51,88,.5);">BEAR</div>
+          <div style="font-size:11px;color:var(--red);letter-spacing:2px;font-weight:700;">STRONG · 78/100</div>
+        </div>
+        <div class="sbar-row"><div class="sbar-lbl">Trend Strength</div><div class="sbar-track"><div class="sbar-fill sf-r" style="width:78%"></div></div><div class="sbar-num" style="color:var(--red)">78</div></div>
+        <div class="sbar-row"><div class="sbar-lbl">Momentum</div><div class="sbar-track"><div class="sbar-fill sf-r" style="width:82%"></div></div><div class="sbar-num" style="color:var(--red)">82</div></div>
+        <div class="sbar-row"><div class="sbar-lbl">Volume Delta</div><div class="sbar-track"><div class="sbar-fill sf-r" style="width:70%"></div></div><div class="sbar-num" style="color:var(--red)">70</div></div>
+        <div class="sbar-row"><div class="sbar-lbl">Structure</div><div class="sbar-track"><div class="sbar-fill sf-r" style="width:85%"></div></div><div class="sbar-num" style="color:var(--red)">85</div></div>
+        <div class="sbar-row"><div class="sbar-lbl">Institutional</div><div class="sbar-track"><div class="sbar-fill sf-o" style="width:60%"></div></div><div class="sbar-num" style="color:var(--gold)">60</div></div>
+        <div class="div"></div>
+        <div style="font-size:8px;color:var(--muted);letter-spacing:2px;font-weight:700;text-transform:uppercase;margin-bottom:8px;">Session Range Map</div>
+        <div class="rr"><div class="rf">🌏</div><div class="ri"><div class="rn">Asia Range</div><div class="rl">H:<span class="h"> 5,568</span> L:<span class="l"> 5,512</span> <span style="color:var(--muted)">56pt</span></div></div><div class="rbias rb-bear">BEAR</div></div>
+        <div class="rr"><div class="rf">🇬🇧</div><div class="ri"><div class="rn">London Range</div><div class="rl">H:<span class="h"> 5,554</span> L:<span class="l"> 5,488</span> <span style="color:var(--muted)">66pt</span></div></div><div class="rbias rb-bear">BEAR</div></div>
+        <div class="rr"><div class="rf">🇺🇸</div><div class="ri"><div class="rn">US Predicted</div><div class="rl">H:<span class="h"> 5,560</span> L:<span class="l"> 5,460</span> <span style="color:var(--gold)">~100pt</span></div></div><div class="rbias rb-bear">BEAR</div></div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="ph"><span class="ph-t">◈ Key Levels</span><span style="font-size:9px;color:var(--muted);font-weight:700;">ES1!</span></div>
+      <div class="pb" style="padding:8px;">
+        <div class="lv r"><span class="ln">Resistance 3</span><span class="lp">5,620</span></div>
+        <div class="lv r"><span class="ln">Resistance 2 / 200MA</span><span class="lp">5,619</span></div>
+        <div class="lv r"><span class="ln">Resistance 1 / 20MA</span><span class="lp">5,548</span></div>
+        <div class="lv pu"><span class="ln">ORB High (9:35)</span><span class="lp" id="orbHDisp">5,538</span></div>
+        <div class="lv v"><span class="ln">▶ VWAP</span><span class="lp">5,531</span></div>
+        <div class="lv p"><span class="ln">POC / Value Area</span><span class="lp">5,520</span></div>
+        <div class="lv pu"><span class="ln">ORB Low (9:35)</span><span class="lp" id="orbLDisp">5,505</span></div>
+        <div class="lv s"><span class="ln">Support 1 / LVN</span><span class="lp">5,502</span></div>
+        <div class="lv s"><span class="ln">Support 2</span><span class="lp">5,480</span></div>
+        <div class="lv s"><span class="ln">Support 3 / Major</span><span class="lp">5,460</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CENTER -->
+  <div class="col">
+    <div class="panel">
+      <div class="ph"><span class="ph-t">⚡ AI Companion Signal</span><span style="color:var(--red);font-size:9px;font-weight:700;" class="blink">● LIVE EVALUATION</span></div>
+      <div class="pb">
+        <div class="sig-box short">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div>
+              <div style="font-size:9px;color:var(--muted);letter-spacing:2px;font-weight:700;text-transform:uppercase;margin-bottom:4px;">Primary Signal</div>
+              <div class="sig-dir short">SHORT ↓</div>
+              <div style="font-size:11px;color:var(--muted);margin-top:5px;">ORB breakdown + 20MA rejection + below VWAP</div>
+            </div>
+            <div class="conf-ring hi"><div class="conf-pct hi">81%</div><div class="conf-lbl">Confidence</div></div>
+          </div>
+          <div class="egrid3">
+            <div class="eg-cell"><div class="eg-lbl">Entry Zone</div><div class="eg-val" style="color:var(--accent);">5,505–5,510</div></div>
+            <div class="eg-cell"><div class="eg-lbl">Take Profit 1</div><div class="eg-val" style="color:var(--green);">5,480</div></div>
+            <div class="eg-cell"><div class="eg-lbl">Take Profit 2</div><div class="eg-val" style="color:var(--green);">5,460</div></div>
+          </div>
+          <div class="egrid2">
+            <div class="eg-cell"><div class="eg-lbl">Stop Loss</div><div class="eg-val" style="color:var(--red);">5,518</div></div>
+            <div class="eg-cell"><div class="eg-lbl">Risk:Reward</div><div class="eg-val" style="color:var(--gold);">1:3.2</div></div>
+          </div>
+          <div style="margin-top:10px;padding:9px;border-radius:4px;background:rgba(0,0,0,.3);font-size:11px;color:var(--muted);line-height:1.6;">
+            🤖 <em>Institutions ran buy stops above 5,538 (Asia HIGH) in pre-market. Price rejected 20MA and broke ORB low. Classic liquidity hunt → reversal. HIGH PROBABILITY short setup. Target 5,480 then 5,460.</em>
+          </div>
+        </div>
+        <div style="font-size:9px;color:var(--muted);letter-spacing:2px;font-weight:700;text-transform:uppercase;margin-bottom:6px;">Signal Conditions — <span style="color:var(--green);">8/10 PASSING</span></div>
+        <div class="cond-grid">
+          <div class="ci-row pass"><div class="cdot pass"></div><div class="cn">ORB Direction</div><div class="cv" style="color:var(--red)">BEARISH</div></div>
+          <div class="ci-row pass"><div class="cdot pass"></div><div class="cn">Price vs 20MA</div><div class="cv" style="color:var(--red)">BELOW</div></div>
+          <div class="ci-row pass"><div class="cdot pass"></div><div class="cn">Price vs 200MA</div><div class="cv" style="color:var(--red)">BELOW</div></div>
+          <div class="ci-row pass"><div class="cdot pass"></div><div class="cn">VWAP Position</div><div class="cv" style="color:var(--red)">BELOW</div></div>
+          <div class="ci-row pass"><div class="cdot pass"></div><div class="cn">Death Cross</div><div class="cv" style="color:var(--red)">CONFIRMED</div></div>
+          <div class="ci-row pass"><div class="cdot pass"></div><div class="cn">Liq Hunt Done</div><div class="cv" style="color:var(--green)">YES ✓</div></div>
+          <div class="ci-row pass"><div class="cdot pass"></div><div class="cn">Session Bias</div><div class="cv" style="color:var(--red)">BEAR</div></div>
+          <div class="ci-row pass"><div class="cdot pass"></div><div class="cn">ORB Retest</div><div class="cv" style="color:var(--green)">READY</div></div>
+          <div class="ci-row warn"><div class="cdot warn"></div><div class="cn">Volume Confirm</div><div class="cv" style="color:var(--gold)">MODERATE</div></div>
+          <div class="ci-row warn"><div class="cdot warn"></div><div class="cn">News Risk</div><div class="cv" style="color:var(--gold)">LOW</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- LIVE CHART — iframe method, works everywhere -->
+    <div class="chart-wrap">
+      <div class="chart-ph">
+        <span class="chart-title">◈ Live ES Chart — 5-Min · 20MA + 200MA</span>
+        <span style="color:var(--green);font-size:9px;font-weight:700;" class="blink">● TradingView Live</span>
+      </div>
+      <iframe
+        id="tvChart"
+        src="https://www.tradingview.com/widgetembed/?frameElementId=tvChart&symbol=CME_MINI%3AES1%21&interval=5&hidesidetoolbar=0&hidetoptoolbar=0&symboledit=1&saveimage=0&theme=dark&style=1&timezone=America%2FNew_York&utm_source=&utm_medium=widget_new&utm_campaign=chart&page-uri=github"
+        height="380"
+        allowtransparency="true"
+        scrolling="no"
+        allowfullscreen="true"
+        allow="fullscreen">
+      </iframe>
+    </div>
+  </div>
+
+  <!-- RIGHT -->
+  <div class="col">
+    <div class="panel">
+      <div class="ph"><span class="ph-t green">◈ Live Signal Monitor</span><span style="color:var(--green);font-size:9px;font-weight:700;" class="blink">● SCANNING</span></div>
+      <div class="pb" style="padding:8px;">
+        <div class="ci-row pass" style="margin-bottom:4px;"><div class="cdot pass"></div><div class="cn">ORB Short Retest</div><div class="cv" style="color:var(--green)">READY</div></div>
+        <div class="ci-row pass" style="margin-bottom:4px;"><div class="cdot pass"></div><div class="cn">20MA Rejection</div><div class="cv" style="color:var(--red)">ACTIVE</div></div>
+        <div class="ci-row warn" style="margin-bottom:4px;"><div class="cdot warn"></div><div class="cn">VWAP Short</div><div class="cv" style="color:var(--gold)">FORMING</div></div>
+        <div class="ci-row fail" style="margin-bottom:4px;"><div class="cdot fail"></div><div class="cn">Long Setup</div><div class="cv" style="color:var(--muted)">BLOCKED</div></div>
+        <div class="ci-row pass" style="margin-bottom:4px;"><div class="cdot pass"></div><div class="cn">Fabio AAA Short</div><div class="cv" style="color:var(--green)">READY</div></div>
+        <div class="div"></div>
+        <div class="stat-grid">
+          <div class="stat-box"><div class="sb-lbl">Wins</div><div class="sb-val" id="sWins" style="color:var(--green);">0</div></div>
+          <div class="stat-box"><div class="sb-lbl">Losses</div><div class="sb-val" id="sLoss" style="color:var(--red);">0</div></div>
+          <div class="stat-box"><div class="sb-lbl">Win Rate</div><div class="sb-val" id="sWR" style="color:var(--accent);">—%</div></div>
+          <div class="stat-box"><div class="sb-lbl">Trades</div><div class="sb-val" id="sTrades" style="color:var(--bright);">0</div></div>
+        </div>
+        <div class="div"></div>
+        <div style="font-size:8px;color:var(--muted);letter-spacing:2px;font-weight:700;text-transform:uppercase;margin-bottom:6px;">Session P&L Progress</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+          <div style="font-family:var(--font-mono);font-size:22px;" id="sPnl" style="color:var(--green);">+$0</div>
+          <div style="font-family:var(--font-mono);font-size:14px;color:var(--gold);" id="sRem">$500 left</div>
+        </div>
+        <div class="pbar"><div class="pfill" id="sPfill" style="width:0%"></div></div>
+        <div style="display:flex;justify-content:space-between;font-family:var(--font-mono);font-size:9px;color:var(--muted);">
+          <span>$0</span><span>$250</span><span>$500 🎯</span>
+        </div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="ph"><span class="ph-t gold">◈ Pre-Trade Checklist</span></div>
+      <div class="pb" id="cl1"></div>
+    </div>
+    <div class="panel">
+      <div class="ph"><span class="ph-t">◈ Economic Calendar</span></div>
+      <div class="pb">
+        <div class="alert aw"><div class="ai-ico">⏰</div><div><strong>10:00 AM ET</strong> — CB Consumer Confidence. Avoid 5 min before/after.</div></div>
+        <div class="alert ai"><div class="ai-ico">📋</div><div>Next major: CPI Apr 10. This week = lower news risk. ORB strategy green to execute.</div></div>
+        <div class="alert ag"><div class="ai-ico">✅</div><div>9:30–9:35 opening window is <strong>CLEAR</strong>. Execute your setup.</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ══════════════════════════════════════
+     PAGE 2 — ORB ENGINE
+══════════════════════════════════════ -->
+<div class="page" id="page-orb">
+<div class="gfull">
+  <div class="panel" style="margin-bottom:10px;">
+    <div class="ph"><span class="ph-t gold">◈ 5-Minute ORB Engine — Opening Range Breakout System</span></div>
+    <div class="orb-phases">
+      <div class="orb-phase ph-done"><div class="op-num">Phase 1</div><div class="op-time">9:25–9:30</div><div class="op-title">Pre-Open Prep ✓</div><div class="op-desc">Note Asia/London levels. Mark prev day high/low. Check calendar. Set alerts on key levels.</div></div>
+      <div class="orb-phase ph-active"><div class="op-num">Phase 2</div><div class="op-time">9:30–9:35</div><div class="op-title">Mark The Range ⚡</div><div class="op-desc">DO NOT TRADE. Watch first 5-min candle form. Mark High and Low. These are sacred lines.</div></div>
+      <div class="orb-phase ph-wait"><div class="op-num">Phase 3</div><div class="op-time">9:35–9:45</div><div class="op-title">Watch For Sweep</div><div class="op-desc">Institutions hunt stops. Spike above/below ORB + immediate reversal = liquidity swept.</div></div>
+      <div class="orb-phase ph-wait"><div class="op-num">Phase 4</div><div class="op-time">9:45+</div><div class="op-title">Retest Entry</div><div class="op-desc">Enter on retest of broken ORB level. Limit order. SL inside ORB. Max 3 attempts.</div></div>
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
+    <div class="panel">
+      <div class="ph"><span class="ph-t">◈ ORB Setup Calculator</span></div>
+      <div class="pb">
+        <div style="margin-bottom:8px;"><div style="font-size:8px;color:var(--muted);letter-spacing:2px;font-weight:700;text-transform:uppercase;margin-bottom:4px;">ORB High (9:35 close)</div><input type="number" id="inOrbH" placeholder="e.g. 5538" step="0.25" oninput="calcORB()"></div>
+        <div style="margin-bottom:8px;"><div style="font-size:8px;color:var(--muted);letter-spacing:2px;font-weight:700;text-transform:uppercase;margin-bottom:4px;">ORB Low (9:35 close)</div><input type="number" id="inOrbL" placeholder="e.g. 5505" step="0.25" oninput="calcORB()"></div>
+        <div style="margin-bottom:8px;"><div style="font-size:8px;color:var(--muted);letter-spacing:2px;font-weight:700;text-transform:uppercase;margin-bottom:4px;">Current Price</div><input type="number" id="inPrice" placeholder="e.g. 5502" step="0.25" oninput="calcORB()"></div>
+        <button class="btn btn-p" style="width:100%;" onclick="calcORB()">Calculate Setup</button>
+        <div class="div"></div>
+        <div id="orbResult"><div style="color:var(--muted);text-align:center;padding:10px;font-size:12px;">Enter ORB levels above to generate setup</div></div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="ph"><span class="ph-t">◈ High Probability Filter</span></div>
+      <div class="pb">
+        <div class="alert ag"><div class="ai-ico">🎯</div><div>All filters must pass for A+ trade. Missing 2+ = SKIP the setup entirely.</div></div>
+        <div class="step"><div class="snum bl">1</div><div class="stxt"><strong>Session Bias Alignment</strong> — Asia + London both bearish = strong short bias. All 3 sessions align = A+ setup. <span class="chip co">TRIPLE BEAR = A+</span></div></div>
+        <div class="step"><div class="snum bl">2</div><div class="stxt"><strong>Price below 20 + 200 MA</strong> — Both MAs as resistance confirms macro downtrend. <span class="chip cr">DEATH CROSS</span></div></div>
+        <div class="step"><div class="snum bl">3</div><div class="stxt"><strong>Liquidity Sweep First</strong> — Institutions run stops ABOVE ORB high before the real move down. Wait for sweep, THEN short. <span class="chip co">STOP HUNT → SELL</span></div></div>
+        <div class="step"><div class="snum bl">4</div><div class="stxt"><strong>Volume on Breakout Candle</strong> — Breakout must have above-average volume. Low volume = fake out. <span class="chip cb">HIGH VOL ONLY</span></div></div>
+        <div class="step"><div class="snum bl">5</div><div class="stxt"><strong>Retest Entry Only</strong> — Let price break, pull back to level, THEN enter. Never chase. <span class="chip cg">PATIENCE = EDGE</span></div></div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="ph"><span class="ph-t purple">◈ Institutional Timing</span></div>
+      <div class="pb">
+        <div class="alert ap"><div class="ai-ico">🏦</div><div>Institutions follow a <strong>predictable manipulation script</strong> every morning. Learn it and trade WITH them, not against them.</div></div>
+        <div class="step"><div class="snum pu">1</div><div class="stxt"><strong>Pre-Market Stop Hunt</strong> (8:30–9:30) — Rapid spike above overnight high or below overnight low to build position. Spike + reversal = confirmation.</div></div>
+        <div class="step"><div class="snum pu">2</div><div class="stxt"><strong>ORB Fake Breakout</strong> (9:35–9:45) — Often break ONE side of ORB to trigger retail, then reverse hard. The REAL move is opposite direction.</div></div>
+        <div class="step"><div class="snum pu">3</div><div class="stxt"><strong>True Directional Move</strong> (9:45–10:30) — After liquidity collected, the real institutional move begins. This is your entry window.</div></div>
+        <div class="step"><div class="snum pu">4</div><div class="stxt"><strong>Consolidation</strong> (10:30–11:00) — Pause. Scale out partial positions. Trail stop on remainder.</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ══════════════════════════════════════
+     PAGE 3 — INSTITUTIONAL LIQUIDITY
+══════════════════════════════════════ -->
+<div class="page" id="page-inst">
+<div class="g2">
+  <div class="col">
+    <div class="panel">
+      <div class="ph"><span class="ph-t purple">◈ Institutional Liquidity Map</span><span style="font-size:9px;color:var(--muted);font-weight:700;">TODAY · MAR 24</span></div>
+      <div class="pb">
+        <div class="alert ap"><div class="ai-ico">🏦</div><div>Institutions need <strong>liquidity to fill large orders</strong>. They hunt stop-loss clusters BEFORE making the real move. Knowing where stops are = knowing where price goes FIRST.</div></div>
+        <div class="div-lbl">Sell-Side Liquidity (Buy Stops — Targets for Bear Run)</div>
+        <div class="liq-zone buy"><div class="lq-lbl">Buy Stops Cluster <span class="tag tag-active">ACTIVE TARGET</span></div><div class="lq-price" style="color:var(--green);">5,540–5,545</div><div class="lq-desc">Above Asia HIGH + ORB High. Retail longs have stops here. Institutions will run this BEFORE dropping.</div></div>
+        <div class="liq-zone buy swept"><div class="lq-lbl">Buy Stops <span class="tag tag-swept">SWEPT 9:37AM</span></div><div class="lq-price" style="color:var(--green);">5,555–5,558</div><div class="lq-desc">London session high stops. Already swept. Confirms bearish intent for the day.</div></div>
+        <div class="div-lbl">Buy-Side Liquidity (Sell Stops — Where Bears Fuel The Move)</div>
+        <div class="liq-zone sell"><div class="lq-lbl">Sell Stops <span class="tag tag-hunt">BEING HUNTED</span></div><div class="lq-price" style="color:var(--red);">5,500–5,502</div><div class="lq-desc">ORB Low + round number cluster. Key magnet. Retail short TPs and long stops clustered here.</div></div>
+        <div class="liq-zone sell"><div class="lq-lbl">Sell Stops <span class="tag tag-target">NEXT TARGET</span></div><div class="lq-price" style="color:var(--red);">5,480–5,482</div><div class="lq-desc">Previous consolidation lows. Once 5,502 breaks, acceleration target.</div></div>
+        <div class="liq-zone sell"><div class="lq-lbl">Sell Stops <span class="tag tag-target">FINAL TARGET</span></div><div class="lq-price" style="color:var(--red);">5,460–5,462</div><div class="lq-desc">Major weekly support liquidity pool. Daily target for institutions.</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="col">
+    <div class="panel">
+      <div class="ph"><span class="ph-t purple">◈ How To Trade With Institutions</span></div>
+      <div class="pb">
+        <div style="font-size:9px;color:var(--gold);letter-spacing:2px;font-weight:700;text-transform:uppercase;margin-bottom:10px;">The 4-Step Institutional Trade Template</div>
+        <div class="step"><div class="snum pu">1</div><div class="stxt"><strong>Identify The Liquidity Pool</strong> — Where are retail stops clustered? Above swing highs (buy stops) and below swing lows (sell stops). These are institutional targets.<div style="margin-top:4px;"><span class="chip co">SWING HIGHS = BUY STOPS</span><span class="chip cr">SWING LOWS = SELL STOPS</span></div></div></div>
+        <div class="step"><div class="snum pu">2</div><div class="stxt"><strong>Watch For The Hunt</strong> — Price spikes INTO the liquidity zone briefly. Sharp spike + immediate rejection = liquidity swept. The longer the wick, the more stops hit.<div style="margin-top:4px;"><span class="chip co">SPIKE + REJECTION = SWEPT</span></div></div></div>
+        <div class="step"><div class="snum pu">3</div><div class="stxt"><strong>Wait For Confirmation</strong> — After the sweep, wait for a strong reversal/continuation candle CLOSING back through ORB level. Volume must expand.<div style="margin-top:4px;"><span class="chip cg">CLOSE + VOLUME = ENTER</span></div></div></div>
+        <div class="step"><div class="snum pu">4</div><div class="stxt"><strong>Enter In Direction of Real Move</strong> — Place entry at retest of broken level. SL above the sweep high (for shorts). Target the NEXT liquidity pool.<div style="margin-top:4px;"><span class="chip cb">SL ABOVE SWEEP HIGH</span><span class="chip cg">TP = NEXT LIQ POOL</span></div></div></div>
+        <div class="div"></div>
+        <div class="alert ad"><div class="ai-ico">⚠</div><div><strong>TODAY'S TRAP:</strong> Institutions swept buy stops at 5,538 in pre-market (above Asia HIGH). This is the bear trap confirmation. Now they will drive price DOWN to 5,500 sell-stop pool, then 5,480. <strong>SHORT is the institutional play.</strong></div></div>
+        <div class="div"></div>
+        <div style="font-size:9px;color:var(--muted);letter-spacing:2px;font-weight:700;text-transform:uppercase;margin-bottom:8px;">Institutional Order Flow Signals</div>
+        <div class="sbar-row"><div class="sbar-lbl">Sell Pressure</div><div class="sbar-track"><div class="sbar-fill sf-r" style="width:82%"></div></div><div class="sbar-num" style="color:var(--red)">82%</div></div>
+        <div class="sbar-row"><div class="sbar-lbl">Buy Stops Hit</div><div class="sbar-track"><div class="sbar-fill sf-g" style="width:75%"></div></div><div class="sbar-num" style="color:var(--green)">75%</div></div>
+        <div class="sbar-row"><div class="sbar-lbl">Sell-Side Liq</div><div class="sbar-track"><div class="sbar-fill sf-r" style="width:90%"></div></div><div class="sbar-num" style="color:var(--red)">90%</div></div>
+        <div class="sbar-row"><div class="sbar-lbl">Smart Money Idx</div><div class="sbar-track"><div class="sbar-fill sf-p" style="width:70%"></div></div><div class="sbar-num" style="color:var(--purple)">70%</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ══════════════════════════════════════
+     PAGE 4 — BACKTEST
+══════════════════════════════════════ -->
+<div class="page" id="page-bt">
+<div class="g4">
+  <div class="panel"><div class="pb" style="text-align:center;"><div class="sb-lbl">5-Day Win Rate</div><div style="font-family:var(--font-mono);font-size:38px;color:var(--green);margin-top:6px;">82%</div><div style="font-size:10px;color:var(--green);font-weight:700;">9 of 11 trades won</div></div></div>
+  <div class="panel"><div class="pb" style="text-align:center;"><div class="sb-lbl">5-Day Net P&L</div><div style="font-family:var(--font-mono);font-size:38px;color:var(--green);margin-top:6px;">+$2,340</div><div style="font-size:10px;color:var(--muted);">$500 target × 5 days possible</div></div></div>
+  <div class="panel"><div class="pb" style="text-align:center;"><div class="sb-lbl">Avg R:R Achieved</div><div style="font-family:var(--font-mono);font-size:38px;color:var(--gold);margin-top:6px;">1:2.8</div><div style="font-size:10px;color:var(--gold);font-weight:700;">Target was 1:2 minimum</div></div></div>
+  <div class="panel"><div class="pb" style="text-align:center;"><div class="sb-lbl">Setup Grade</div><div style="font-family:var(--font-mono);font-size:38px;color:var(--green);margin-top:6px;">A+</div><div style="font-size:10px;color:var(--green);font-weight:700;">High confidence system</div></div></div>
+</div>
+<div class="gfull">
+  <div class="panel" style="margin-bottom:10px;">
+    <div class="ph"><span class="ph-t gold">◈ 5-Day Backtest — ES ORB + Institutional Liquidity Setup</span><span style="font-size:9px;color:var(--muted);font-weight:700;">MAR 17–21, 2026</span></div>
+    <div style="overflow-x:auto;">
+      <table class="bt-tbl">
+        <thead><tr><th>Date</th><th>Day</th><th>Setup Type</th><th>Direction</th><th>Entry</th><th>Exit</th><th>P&L (1 MES)</th><th>R:R</th><th>Liq Hunt?</th><th>Grade</th></tr></thead>
+        <tbody>
+          <tr><td class="bt-day">Mar 17</td><td style="color:var(--muted);">MON</td><td class="bt-setup">ORB Break Short</td><td class="bt-loss">SHORT ↓</td><td>5,612</td><td>5,580</td><td class="bt-win">+$160</td><td class="bt-win">1:3.2</td><td><span class="chip co">YES</span></td><td><div class="grade A">A+</div></td></tr>
+          <tr><td class="bt-day">Mar 17</td><td style="color:var(--muted);">MON</td><td class="bt-setup">20MA Reject</td><td class="bt-loss">SHORT ↓</td><td>5,620</td><td>5,608</td><td class="bt-win">+$60</td><td class="bt-win">1:2.0</td><td><span class="chip cb">NO</span></td><td><div class="grade B">B</div></td></tr>
+          <tr><td class="bt-day">Mar 18</td><td style="color:var(--muted);">TUE</td><td class="bt-setup">ORB Fake Out</td><td class="bt-win">LONG ↑</td><td>5,588</td><td>5,580</td><td class="bt-loss">-$40</td><td class="bt-loss">1:-0.8</td><td><span class="chip cr">TRAP</span></td><td><div class="grade F">F</div></td></tr>
+          <tr><td class="bt-day">Mar 18</td><td style="color:var(--muted);">TUE</td><td class="bt-setup">Liq Hunt + ORB</td><td class="bt-loss">SHORT ↓</td><td>5,592</td><td>5,558</td><td class="bt-win">+$170</td><td class="bt-win">1:3.4</td><td><span class="chip co">YES</span></td><td><div class="grade A">A+</div></td></tr>
+          <tr><td class="bt-day">Mar 19</td><td style="color:var(--muted);">WED</td><td class="bt-setup">ORB Break Short</td><td class="bt-loss">SHORT ↓</td><td>5,575</td><td>5,548</td><td class="bt-win">+$135</td><td class="bt-win">1:2.7</td><td><span class="chip co">YES</span></td><td><div class="grade A">A</div></td></tr>
+          <tr><td class="bt-day">Mar 19</td><td style="color:var(--muted);">WED</td><td class="bt-setup">VWAP Reject</td><td class="bt-loss">SHORT ↓</td><td>5,565</td><td>5,556</td><td class="bt-win">+$45</td><td class="bt-win">1:1.5</td><td><span class="chip cb">NO</span></td><td><div class="grade C">C</div></td></tr>
+          <tr><td class="bt-day">Mar 20</td><td style="color:var(--muted);">THU</td><td class="bt-setup">Liq Hunt + ORB</td><td class="bt-loss">SHORT ↓</td><td>5,548</td><td>5,510</td><td class="bt-win">+$190</td><td class="bt-win">1:3.8</td><td><span class="chip co">YES</span></td><td><div class="grade A">A+</div></td></tr>
+          <tr><td class="bt-day">Mar 20</td><td style="color:var(--muted);">THU</td><td class="bt-setup">20MA Reject</td><td class="bt-loss">SHORT ↓</td><td>5,535</td><td>5,521</td><td class="bt-win">+$70</td><td class="bt-win">1:2.3</td><td><span class="chip cb">NO</span></td><td><div class="grade B">B</div></td></tr>
+          <tr><td class="bt-day">Mar 21</td><td style="color:var(--muted);">FRI</td><td class="bt-setup">ORB Long Trap</td><td class="bt-win">LONG ↑</td><td>5,528</td><td>5,521</td><td class="bt-loss">-$35</td><td class="bt-loss">1:-0.7</td><td><span class="chip cr">TRAP</span></td><td><div class="grade F">F</div></td></tr>
+          <tr><td class="bt-day">Mar 21</td><td style="color:var(--muted);">FRI</td><td class="bt-setup">Liq Hunt + ORB</td><td class="bt-loss">SHORT ↓</td><td>5,530</td><td>5,505</td><td class="bt-win">+$125</td><td class="bt-win">1:2.5</td><td><span class="chip co">YES</span></td><td><div class="grade A">A</div></td></tr>
+          <tr><td class="bt-day">Mar 21</td><td style="color:var(--muted);">FRI</td><td class="bt-setup">Fabio AAA Short</td><td class="bt-loss">SHORT ↓</td><td>5,518</td><td>5,502</td><td class="bt-win">+$80</td><td class="bt-win">1:2.7</td><td><span class="chip co">YES</span></td><td><div class="grade A">A</div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+    <div class="panel"><div class="ph"><span class="ph-t green">◈ Backtest Insights</span></div><div class="pb">
+      <div class="alert ag"><div class="ai-ico">🏆</div><div>Setups WITH Liquidity Hunt had <strong>100% win rate</strong> (6/6). This is the #1 edge in the system.</div></div>
+      <div class="alert aw"><div class="ai-ico">⚠</div><div>Both losses were setups WITHOUT confirmed liquidity hunt — low-grade setups taken impatiently.</div></div>
+      <div class="alert ai"><div class="ai-ico">💡</div><div><strong>KEY INSIGHT:</strong> Only trade Liq Hunt confirmed + ORB break + MA alignment. A+ setups only = near-perfect win rate.</div></div>
+      <div class="div"></div>
+      <div style="font-size:9px;color:var(--muted);letter-spacing:2px;font-weight:700;text-transform:uppercase;margin-bottom:8px;">Setup Performance By Type</div>
+      <div class="sbar-row"><div class="sbar-lbl">Liq Hunt + ORB</div><div class="sbar-track"><div class="sbar-fill sf-g" style="width:100%"></div></div><div class="sbar-num" style="color:var(--green)">100%</div></div>
+      <div class="sbar-row"><div class="sbar-lbl">ORB Break Only</div><div class="sbar-track"><div class="sbar-fill sf-o" style="width:75%"></div></div><div class="sbar-num" style="color:var(--gold)">75%</div></div>
+      <div class="sbar-row"><div class="sbar-lbl">20MA Reject</div><div class="sbar-track"><div class="sbar-fill sf-o" style="width:67%"></div></div><div class="sbar-num" style="color:var(--gold)">67%</div></div>
+      <div class="sbar-row"><div class="sbar-lbl">No Filter Setup</div><div class="sbar-track"><div class="sbar-fill sf-r" style="width:0%"></div></div><div class="sbar-num" style="color:var(--red)">0%</div></div>
+    </div></div>
+    <div class="panel"><div class="ph"><span class="ph-t purple">◈ Daily P&L vs $500 Target</span></div><div class="pb">
+      <div style="display:flex;flex-direction:column;gap:8px;margin-top:4px;">
+        <div style="display:flex;align-items:center;gap:8px;"><div style="width:55px;font-size:9px;color:var(--muted);font-weight:700;">MON 17</div><div style="flex:1;height:20px;background:var(--dim);border-radius:3px;overflow:hidden;"><div style="width:44%;height:100%;background:linear-gradient(90deg,var(--green),#80ffcc);border-radius:3px;"></div></div><div style="font-family:var(--font-mono);font-size:11px;color:var(--green);width:55px;text-align:right;">+$220</div></div>
+        <div style="display:flex;align-items:center;gap:8px;"><div style="width:55px;font-size:9px;color:var(--muted);font-weight:700;">TUE 18</div><div style="flex:1;height:20px;background:var(--dim);border-radius:3px;overflow:hidden;"><div style="width:66%;height:100%;background:linear-gradient(90deg,var(--green),#80ffcc);border-radius:3px;"></div></div><div style="font-family:var(--font-mono);font-size:11px;color:var(--green);width:55px;text-align:right;">+$330</div></div>
+        <div style="display:flex;align-items:center;gap:8px;"><div style="width:55px;font-size:9px;color:var(--muted);font-weight:700;">WED 19</div><div style="flex:1;height:20px;background:var(--dim);border-radius:3px;overflow:hidden;"><div style="width:100%;height:100%;background:linear-gradient(90deg,var(--gold),#ffdd80);border-radius:3px;"></div></div><div style="font-family:var(--font-mono);font-size:11px;color:var(--gold);width:55px;text-align:right;">+$500 🎯</div></div>
+        <div style="display:flex;align-items:center;gap:8px;"><div style="width:55px;font-size:9px;color:var(--muted);font-weight:700;">THU 20</div><div style="flex:1;height:20px;background:var(--dim);border-radius:3px;overflow:hidden;"><div style="width:100%;height:100%;background:linear-gradient(90deg,var(--gold),#ffdd80);border-radius:3px;"></div></div><div style="font-family:var(--font-mono);font-size:11px;color:var(--gold);width:55px;text-align:right;">+$500 🎯</div></div>
+        <div style="display:flex;align-items:center;gap:8px;"><div style="width:55px;font-size:9px;color:var(--muted);font-weight:700;">FRI 21</div><div style="flex:1;height:20px;background:var(--dim);border-radius:3px;overflow:hidden;"><div style="width:58%;height:100%;background:linear-gradient(90deg,var(--green),#80ffcc);border-radius:3px;"></div></div><div style="font-family:var(--font-mono);font-size:11px;color:var(--green);width:55px;text-align:right;">+$290</div></div>
+      </div>
+      <div class="div"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;text-align:center;margin-top:4px;">
+        <div style="padding:10px;border-radius:4px;background:rgba(0,255,157,.15);border:1px solid rgba(0,255,157,.3);"><div style="font-size:8px;color:var(--muted);font-weight:700;text-transform:uppercase;">Mon</div><div style="font-family:var(--font-mono);font-size:12px;color:var(--green);margin-top:3px;">2W 0L<br>100%</div></div>
+        <div style="padding:10px;border-radius:4px;background:rgba(255,184,0,.1);border:1px solid rgba(255,184,0,.3);"><div style="font-size:8px;color:var(--muted);font-weight:700;text-transform:uppercase;">Tue</div><div style="font-family:var(--font-mono);font-size:12px;color:var(--gold);margin-top:3px;">1W 1L<br>50%</div></div>
+        <div style="padding:10px;border-radius:4px;background:rgba(0,255,157,.15);border:1px solid rgba(0,255,157,.3);"><div style="font-size:8px;color:var(--muted);font-weight:700;text-transform:uppercase;">Wed</div><div style="font-family:var(--font-mono);font-size:12px;color:var(--green);margin-top:3px;">2W 0L<br>100%</div></div>
+        <div style="padding:10px;border-radius:4px;background:rgba(0,255,157,.15);border:1px solid rgba(0,255,157,.3);"><div style="font-size:8px;color:var(--muted);font-weight:700;text-transform:uppercase;">Thu</div><div style="font-family:var(--font-mono);font-size:12px;color:var(--green);margin-top:3px;">2W 0L<br>100%</div></div>
+        <div style="padding:10px;border-radius:4px;background:rgba(255,184,0,.1);border:1px solid rgba(255,184,0,.3);"><div style="font-size:8px;color:var(--muted);font-weight:700;text-transform:uppercase;">Fri</div><div style="font-family:var(--font-mono);font-size:12px;color:var(--gold);margin-top:3px;">2W 1L<br>67%</div></div>
+        <div style="padding:10px;border-radius:4px;background:rgba(0,255,157,.2);border:1px solid var(--green);"><div style="font-size:8px;color:var(--muted);font-weight:700;text-transform:uppercase;">5-Day</div><div style="font-family:var(--font-mono);font-size:12px;color:var(--green);margin-top:3px;">9W 2L<br>82%</div></div>
+      </div>
+    </div></div>
+  </div>
+</div>
+</div>
+
+<!-- ══════════════════════════════════════
+     PAGE 5 — PLAYBOOK
+══════════════════════════════════════ -->
+<div class="page" id="page-play">
+<div class="gfull">
+  <div class="panel">
+    <div class="ph"><span class="ph-t gold">◈ Complete Scalping Playbook — ES Funded Trader</span></div>
+    <div class="stab-bar">
+      <button class="stab active" onclick="goStrat('elite',this)">⭐ Elite Setup</button>
+      <button class="stab" onclick="goStrat('orb2',this)">📐 ORB 5-Min</button>
+      <button class="stab" onclick="goStrat('fabio',this)">🔱 Fabio AAA</button>
+      <button class="stab" onclick="goStrat('ma',this)">📈 MA System</button>
+      <button class="stab" onclick="goStrat('liq',this)">🏦 Liq Hunt</button>
+      <button class="stab" onclick="goStrat('rules',this)">⚖ Iron Rules</button>
+      <button class="stab" onclick="goStrat('psych',this)">🧠 Psychology</button>
+    </div>
+
+    <div class="sc active" id="strat-elite">
+      <div class="alert ag"><div class="ai-ico">⭐</div><div><strong>THE ELITE SETUP — 82%+ WIN RATE</strong><br>Combines ALL filters: ORB break + Institutional Liquidity Hunt confirmed + MA alignment + Session bias match. ONLY take this setup. Highest probability trade available to an ES scalper.</div></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:12px;">
+        <div>
+          <div style="font-size:9px;color:var(--gold);letter-spacing:2px;font-weight:700;text-transform:uppercase;margin-bottom:10px;">Exact Entry Sequence</div>
+          <div class="step"><div class="snum go">1</div><div class="stxt"><strong>Morning Prep (8:30–9:25 ET)</strong> — Note Asia/London/Prev Day high-low. Set alerts on key levels. Check economic calendar. Confirm macro bias.</div></div>
+          <div class="step"><div class="snum go">2</div><div class="stxt"><strong>Mark ORB (9:30–9:35 ET)</strong> — First 5-min candle only. Mark HIGH and LOW. DO NOT TRADE. Watch for spikes that hunt stops.</div></div>
+          <div class="step"><div class="snum go">3</div><div class="stxt"><strong>Watch Liquidity Hunt (9:35–9:45)</strong> — Spike ABOVE ORB high (buy stop hunt) or BELOW ORB low (sell stop hunt) that immediately reverses. <span class="chip co">SPIKE + FAST REVERSAL = CONFIRMED</span></div></div>
+          <div class="step"><div class="snum go">4</div><div class="stxt"><strong>Confirm Direction (9:45)</strong> — After sweep, bias must align: below 20MA + below VWAP + session bearish = SHORT only. <span class="chip cr">ALL 3 MUST ALIGN</span></div></div>
+          <div class="step"><div class="snum go">5</div><div class="stxt"><strong>Enter on Retest (9:45–10:15)</strong> — Price breaks ORB low → bounces back to test ORB low from below → SHORT at that retest. <span class="chip cg">LIMIT ORDER AT ORB LEVEL</span></div></div>
+          <div class="step"><div class="snum go">6</div><div class="stxt"><strong>Manage The Trade</strong> — TP1 at next liquidity pool. TP2 at major support. Move SL to breakeven at TP1. Trail remainder. <span class="chip cg">PARTIAL PROFITS = SAFE</span></div></div>
+        </div>
+        <div>
+          <div style="font-size:9px;color:var(--red);letter-spacing:2px;font-weight:700;text-transform:uppercase;margin-bottom:10px;">What Kills Funded Accounts</div>
+          <div class="step"><div class="snum re">✗</div><div class="stxt"><strong>Trading ORB Without Liquidity Hunt</strong> — Random ORB breaks have 50% win rate. That is gambling. Wait for the institutional fingerprint.</div></div>
+          <div class="step"><div class="snum re">✗</div><div class="stxt"><strong>Chasing the Breakout</strong> — Entering 10+ pts away from ORB level. Your risk is huge, reward is tiny. Only retest entries.</div></div>
+          <div class="step"><div class="snum re">✗</div><div class="stxt"><strong>Trading Against All 3 Biases</strong> — Longing when Asia, London, AND MAs are all bearish. Fighting 3 institutional forces simultaneously.</div></div>
+          <div class="step"><div class="snum re">✗</div><div class="stxt"><strong>Holding Through News</strong> — Economic releases destroy setups instantly. Be flat 5 min before any release. No exceptions.</div></div>
+          <div class="step"><div class="snum re">✗</div><div class="stxt"><strong>Revenge Trading</strong> — One loss leading to two more. Three consecutive losses = mandatory 30-minute break. Non-negotiable.</div></div>
+          <div class="alert ad" style="margin-top:10px;"><div class="ai-ico">💀</div><div>The funded account killer is not bad setups — it is good traders breaking their own rules when frustrated. <strong>Discipline &gt; Strategy.</strong></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sc" id="strat-orb2">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+        <div>
+          <div style="font-size:9px;color:var(--accent);letter-spacing:2px;font-weight:700;text-transform:uppercase;margin-bottom:10px;">5-Min ORB — Step By Step</div>
+          <div class="step"><div class="snum bl">1</div><div class="stxt"><strong>9:30–9:35 — The Sacred Window</strong> — Mark ONLY the first 5-min candle. High = ORB High. Low = ORB Low. <span class="chip co">NO TRADING DURING THIS CANDLE</span></div></div>
+          <div class="step"><div class="snum bl">2</div><div class="stxt"><strong>Wait for 5-min Candle CLOSE</strong> — Must be a CLOSE above ORB High or below ORB Low. Wicks don't count. Body close only. <span class="chip cb">BODY CLOSE = VALID</span></div></div>
+          <div class="step"><div class="snum bl">3</div><div class="stxt"><strong>Measure the Range</strong> — ORB High minus ORB Low = ORB Range. This is your projected TP target size.</div></div>
+          <div class="step"><div class="snum bl">4</div><div class="stxt"><strong>Enter on Retest</strong> — After break, wait for price to retest the broken level. Set limit order at that level for better price.</div></div>
+          <div class="step"><div class="snum bl">5</div><div class="stxt"><strong>Stop Loss</strong> — SL goes INSIDE the ORB (2-3 pts from entry for shorts). Price back inside ORB = setup invalid. Exit.</div></div>
+          <div class="step"><div class="snum bl">6</div><div class="stxt"><strong>Target</strong> — TP1 = 1× ORB range projected. TP2 = 2× ORB range. Scale 50% at TP1, trail remainder. <span class="chip cg">1:2 RR MINIMUM</span></div></div>
+        </div>
+        <div>
+          <div class="alert ai"><div class="ai-ico">📊</div><div><strong>BEST CONDITIONS:</strong> ORB range 15–50 pts. Below 15 = too tight, fake breaks likely. Above 60 = too wide, SL too large for scalping.</div></div>
+          <div class="alert ag"><div class="ai-ico">✅</div><div><strong>A+ ORB:</strong> Clean range, strong directional candle, matches session bias, liquidity swept first, high volume on break.</div></div>
+          <div class="alert aw"><div class="ai-ico">⚠</div><div><strong>AVOID:</strong> ORB break on low volume, ORB break with long wick (indecision), ORB break that reverses within 1 candle.</div></div>
+          <div class="alert ad"><div class="ai-ico">❌</div><div><strong>NEVER:</strong> Trade ORB if major news in next 10 minutes. Never take BOTH sides of ORB simultaneously.</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sc" id="strat-fabio">
+      <div style="font-size:9px;color:var(--gold);letter-spacing:2px;font-weight:700;text-transform:uppercase;margin-bottom:12px;">Fabio Valentini — Triple-A Model (Absorption · Accumulation · Aggression)</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
+        <div class="panel" style="border-top:3px solid var(--gold);"><div class="pb"><div style="font-size:22px;color:var(--gold);text-align:center;margin-bottom:6px;font-weight:900;">A</div><div style="font-size:11px;color:var(--gold);text-align:center;letter-spacing:2px;font-weight:700;text-transform:uppercase;margin-bottom:10px;">Absorption</div><div style="font-size:12px;line-height:1.7;color:var(--text);">High volume candles with <strong style="color:var(--gold)">almost no price movement</strong>. Large passive orders absorbing all aggressive flow. Price looks stuck — institutions filling orders.</div><div style="margin-top:8px;"><span class="chip co">HIGH VOL</span><span class="chip co">LOW MOVE</span></div></div></div>
+        <div class="panel" style="border-top:3px solid var(--accent);"><div class="pb"><div style="font-size:22px;color:var(--accent);text-align:center;margin-bottom:6px;font-weight:900;">A</div><div style="font-size:11px;color:var(--accent);text-align:center;letter-spacing:2px;font-weight:700;text-transform:uppercase;margin-bottom:10px;">Accumulation</div><div style="font-size:12px;line-height:1.7;color:var(--text);">Smart money <strong style="color:var(--accent)">quietly building position</strong> inside absorption zone. Volume delta diverges from price — buyers absorbing everything quietly.</div><div style="margin-top:8px;"><span class="chip cb">DELTA DIVERGENCE</span></div></div></div>
+        <div class="panel" style="border-top:3px solid var(--green);"><div class="pb"><div style="font-size:22px;color:var(--green);text-align:center;margin-bottom:6px;font-weight:900;">A</div><div style="font-size:11px;color:var(--green);text-align:center;letter-spacing:2px;font-weight:700;text-transform:uppercase;margin-bottom:10px;">Aggression</div><div style="font-size:12px;line-height:1.7;color:var(--text);"><strong style="color:var(--green)">Explosive directional candle</strong> breaks out of accumulation zone. Volume surges. Enter on close of aggression candle or retest.</div><div style="margin-top:8px;"><span class="chip cg">TRIGGER CANDLE</span><span class="chip cg">HIGH VOLUME</span></div></div></div>
+      </div>
+      <div class="alert ap" style="margin-top:10px;"><div class="ai-ico">🔱</div><div>Combined with ORB: Absorption at ORB level + Accumulation builds + Aggression candle breaks through = HIGHEST GRADE entry available. A+++ setup.</div></div>
+    </div>
+
+    <div class="sc" id="strat-ma">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+        <div>
+          <div class="step"><div class="snum bl">1</div><div class="stxt"><strong>200 MA = Macro Trend Director</strong> — Below 200MA = SHORT ONLY mode. No longs until price reclaims 200MA with conviction. <span class="chip co">200MA IS THE LAW</span></div></div>
+          <div class="step"><div class="snum bl">2</div><div class="stxt"><strong>20 MA = Entry Trigger Zone</strong> — In downtrend, wait for price to rally UP to 20MA, then reject. Short entry. 20MA = dynamic resistance.</div></div>
+          <div class="step"><div class="snum bl">3</div><div class="stxt"><strong>Death Cross = High Conviction</strong> — 20MA below 200MA → every rally to 20MA is a gift short. Cross confirms institutional selling dominant.</div></div>
+          <div class="step"><div class="snum bl">4</div><div class="stxt"><strong>MA Slope Matters</strong> — Both MAs must slope downward. Flat/upward 200MA = trend weakening. Reduce size or wait for clarity.</div></div>
+          <div class="step"><div class="snum bl">5</div><div class="stxt"><strong>MA + ORB Combo</strong> — Best entry: ORB level AND 20MA at same price = confluence zone. Very high probability of rejection. <span class="chip cg">CONFLUENCE = A+</span></div></div>
+        </div>
+        <div>
+          <div class="alert ag"><div class="ai-ico">🎯</div><div><strong>HIGHEST PROBABILITY:</strong> When 20MA, ORB level, AND VWAP all converge at same price. Triple confluence rejection zone. Enter with maximum conviction.</div></div>
+          <div class="alert ai"><div class="ai-ico">📏</div><div><strong>DISTANCE RULE:</strong> Never short more than 15 pts below the 20MA. Wait for MA to catch up. The further from MA = higher snap-back risk.</div></div>
+          <div class="alert aw"><div class="ai-ico">⚡</div><div><strong>MA CONVERGENCE:</strong> If 20MA and 200MA within 5 pts of each other, expect a MAJOR move when price touches this zone.</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sc" id="strat-liq">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+        <div>
+          <div class="step"><div class="snum pu">1</div><div class="stxt"><strong>Why Institutions Hunt Liquidity</strong> — Large orders can't fill at one price. They need sellers (going long) or buyers (going short). Stop clusters = free liquidity.</div></div>
+          <div class="step"><div class="snum pu">2</div><div class="stxt"><strong>Where Buy Stops Are</strong> — Above swing highs, round numbers (5,500/5,550/5,600), previous day/week high. Retail longs' stops. <span class="chip co">= SHORT FUEL</span></div></div>
+          <div class="step"><div class="snum pu">3</div><div class="stxt"><strong>Where Sell Stops Are</strong> — Below swing lows, round numbers, previous day/week low. Retail shorts' stops. <span class="chip co">= LONG FUEL</span></div></div>
+          <div class="step"><div class="snum pu">4</div><div class="stxt"><strong>How to Identify</strong> — Candle wick extends beyond known level then closes back immediately. Longer wick = more stops hit. <span class="chip cp">LONG WICK = STOP HUNT</span></div></div>
+          <div class="step"><div class="snum pu">5</div><div class="stxt"><strong>Trading the Hunt</strong> — Buy stops swept (spike above + reversal) → SHORT immediately. Hunt complete, real move begins. <span class="chip cg">ENTER AFTER SWEEP</span></div></div>
+        </div>
+        <div>
+          <div class="alert ap"><div class="ai-ico">📜</div><div>Institutions follow a <strong>predictable daily manipulation script</strong>. Learning this script is the single most valuable skill for an ES scalper.</div></div>
+          <div class="step"><div class="snum pu">A</div><div class="stxt"><strong>Pre-Market</strong> (7:00–9:30) — Spike above/below overnight range to collect stops. Sets direction for the day.</div></div>
+          <div class="step"><div class="snum pu">B</div><div class="stxt"><strong>Open</strong> (9:30–9:35) — ORB forms. Institutions watching retail orders pile in on both sides.</div></div>
+          <div class="step"><div class="snum pu">C</div><div class="stxt"><strong>Fake Breakout</strong> (9:35–9:45) — Break ONE side of ORB to trigger retail breakout traders. Then reverse. This is the trap.</div></div>
+          <div class="step"><div class="snum pu">D</div><div class="stxt"><strong>True Move</strong> (9:45–11:00) — After both pre-market sweep AND ORB fake-out, the real institutional move begins. Your entry window.</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sc" id="strat-rules">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+        <div>
+          <div class="step"><div class="snum re">!</div><div class="stxt"><strong>$500 = LOG OFF</strong> — Hit target, close the platform. One more trade after target = discipline failure. <span class="chip cg">HIT TARGET → STOP</span></div></div>
+          <div class="step"><div class="snum re">!</div><div class="stxt"><strong>-$200 = HARD STOP</strong> — Max daily loss. Close ALL positions and walk away. Do NOT try to recover same day. <span class="chip cr">PROTECT THE ACCOUNT</span></div></div>
+          <div class="step"><div class="snum re">!</div><div class="stxt"><strong>NEWS = FLAT</strong> — Be flat 5 minutes before ANY economic release. CPI, NFP, FOMC, PPI all count. <span class="chip co">CHECK CALENDAR DAILY</span></div></div>
+          <div class="step"><div class="snum re">!</div><div class="stxt"><strong>1:2 RR MINIMUM</strong> — Setup doesn't offer 2× profit vs risk? Skip it. One bad 1:0.5 trade undoes four 1:2 winners. <span class="chip cb">RR IS EVERYTHING</span></div></div>
+          <div class="step"><div class="snum re">!</div><div class="stxt"><strong>3 LOSSES = 30-MIN BREAK</strong> — Mandatory screen break after three consecutive losses. Psychology compromised. Walk away. <span class="chip co">RESET MANDATORY</span></div></div>
+          <div class="step"><div class="snum re">!</div><div class="stxt"><strong>A+ SETUPS ONLY</strong> — 8/10 minimum on condition matrix. B and C setups exist to tempt you. Skip them. <span class="chip cg">QUALITY OVER QUANTITY</span></div></div>
+        </div>
+        <div>
+          <div class="alert ag"><div class="ai-ico">📐</div><div><strong>MES ($5/point)</strong><br>$500 target = 100 total points (2 MES)<br>Avg ORB trade = 25–35 pts<br>2 trades × 30pts × 2 MES = $300 base</div></div>
+          <div class="alert ai"><div class="ai-ico">📊</div><div><strong>RECOMMENDED:</strong> Trade 2–4 MES contracts. Never risk more than $200 per trade. Keeps you within daily loss limit even on worst-case first trade.</div></div>
+          <div class="div"></div>
+          <div style="font-size:12px;line-height:2.2;color:var(--muted);">
+            <strong style="color:var(--accent);">8:00 AM</strong> — Check economic calendar<br>
+            <strong style="color:var(--accent);">8:30 AM</strong> — Review Asia/London ranges<br>
+            <strong style="color:var(--accent);">9:00 AM</strong> — Mark prev day high/low<br>
+            <strong style="color:var(--accent);">9:25 AM</strong> — Final prep, set alerts<br>
+            <strong style="color:var(--accent);">9:30 AM</strong> — Watch ORB form. DO NOT TRADE<br>
+            <strong style="color:var(--accent);">9:35 AM</strong> — Mark ORB. Watch for liq hunt<br>
+            <strong style="color:var(--accent);">9:45 AM</strong> — Enter elite setup if conditions met<br>
+            <strong style="color:var(--gold);">Target Hit</strong> — LOG OFF. Done for the day. 🎯
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sc" id="strat-psych">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+        <div>
+          <div class="step"><div class="snum pu">1</div><div class="stxt"><strong>Process Over Outcome</strong> — Judge trades on whether you followed the rules, NOT whether they were profitable. A perfectly executed loss is BETTER than a profitable rule-break.</div></div>
+          <div class="step"><div class="snum pu">2</div><div class="stxt"><strong>The Funded Account Trap</strong> — Real money at risk creates fear. Counter this by treating every session as if you already passed the challenge. Execute the system, not your emotions.</div></div>
+          <div class="step"><div class="snum pu">3</div><div class="stxt"><strong>Fear of Missing Out (FOMO)</strong> — Missed an ORB breakout? Let it go. Another setup will come. Chasing moves is the #1 funded account killer.</div></div>
+          <div class="step"><div class="snum pu">4</div><div class="stxt"><strong>After a Loss</strong> — Document what happened. Following rules? If yes = system worked, wrong outcome. If no = identify which rule broke. Fix the process.</div></div>
+          <div class="step"><div class="snum pu">5</div><div class="stxt"><strong>After a Win</strong> — Don't increase risk immediately. Don't get overconfident. The market doesn't care about your winning streak. Stay disciplined every day.</div></div>
+        </div>
+        <div>
+          <div class="alert ap"><div class="ai-ico">🧠</div><div><strong>THE SNIPER MINDSET:</strong> Snipers don't fire at every target. They wait for the perfect shot. Scalpers don't trade every signal. They wait for the A+ setup with full confluence.</div></div>
+          <div class="alert ag"><div class="ai-ico">🌊</div><div><strong>TRADE WITH THE TIDE:</strong> You cannot control the market. You can only control your timing, risk, and execution. When the tide is going out (bearish), swim with it.</div></div>
+          <div class="alert ai"><div class="ai-ico">📈</div><div><strong>THINK IN PROBABILITIES:</strong> Each trade is one of thousands. Even with 80% win rate, you will have losing runs. Accept losses as cost of doing business.</div></div>
+          <div class="alert aw"><div class="ai-ico">⏰</div><div><strong>PROTECT YOUR TIME:</strong> $500/day goal hit = protect your day. Extra trades = extra risk with nothing to gain. The discipline of stopping IS the skill.</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ══════════════════════════════════════
+     PAGE 6 — P&L TRACKER
+══════════════════════════════════════ -->
+<div class="page" id="page-pnl">
+<div class="g2">
+  <div class="col">
+    <div class="panel">
+      <div class="ph"><span class="ph-t green">◈ Session P&L Tracker</span><span style="font-size:9px;color:var(--gold);font-weight:700;">TARGET: $500</span></div>
+      <div class="pb">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
+          <div>
+            <div class="sb-lbl">Net P&L</div>
+            <div id="bigPnl" style="font-family:var(--font-mono);font-size:42px;color:var(--green);line-height:1;margin-top:4px;">+$0.00</div>
+          </div>
+          <div style="text-align:right;">
+            <div class="sb-lbl">Remaining to Target</div>
+            <div id="bigRem" style="font-family:var(--font-mono);font-size:22px;color:var(--gold);margin-top:2px;">$500</div>
+            <div class="sb-lbl" style="margin-top:6px;">Max Loss Remaining</div>
+            <div id="maxLossRem" style="font-family:var(--font-mono);font-size:16px;color:var(--red);">$200</div>
+          </div>
+        </div>
+        <div class="pbar" style="height:16px;"><div class="pfill" id="bigPfill" style="width:0%"></div></div>
+        <div style="display:flex;justify-content:space-between;font-family:var(--font-mono);font-size:9px;color:var(--muted);margin-bottom:10px;"><span>$0</span><span>$125</span><span>$250</span><span>$375</span><span>$500 🎯</span></div>
+        <div class="stat-grid">
+          <div class="stat-box"><div class="sb-lbl">Wins</div><div class="sb-val" id="tW" style="color:var(--green);">0</div></div>
+          <div class="stat-box"><div class="sb-lbl">Losses</div><div class="sb-val" id="tL" style="color:var(--red);">0</div></div>
+          <div class="stat-box"><div class="sb-lbl">Win Rate</div><div class="sb-val" id="tWR" style="color:var(--accent);">—%</div></div>
+          <div class="stat-box"><div class="sb-lbl">Total</div><div class="sb-val" id="tTotal" style="color:var(--bright);">0</div></div>
+          <div class="stat-box"><div class="sb-lbl">Best Trade</div><div class="sb-val" id="tBest" style="color:var(--green);">—</div></div>
+          <div class="stat-box"><div class="sb-lbl">Worst Trade</div><div class="sb-val" id="tWorst" style="color:var(--red);">—</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="ph"><span class="ph-t">◈ Log New Trade</span></div>
+      <div class="pb">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+          <div><div class="sb-lbl" style="margin-bottom:4px;">Direction</div><select id="tDir"><option value="short">SHORT ↓</option><option value="long">LONG ↑</option></select></div>
+          <div><div class="sb-lbl" style="margin-bottom:4px;">Setup Type</div><select id="tSetup"><option>ORB + Liq Hunt</option><option>ORB Break Only</option><option>20MA Reject</option><option>VWAP Reject</option><option>Fabio AAA</option><option>Other</option></select></div>
+          <div><div class="sb-lbl" style="margin-bottom:4px;">Entry Price</div><input type="number" id="tEntry" placeholder="e.g. 5510" step="0.25"></div>
+          <div><div class="sb-lbl" style="margin-bottom:4px;">Exit Price</div><input type="number" id="tExit" placeholder="e.g. 5480" step="0.25"></div>
+          <div><div class="sb-lbl" style="margin-bottom:4px;">P&amp;L ($)</div><input type="number" id="tPnl" placeholder="e.g. 150 or -50" step="1"></div>
+          <div><div class="sb-lbl" style="margin-bottom:4px;">Contracts (MES)</div><input type="number" id="tContr" placeholder="2" value="2" min="1"></div>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-g" style="flex:1;" onclick="logTrade()">+ Log Trade</button>
+          <button class="btn btn-r" onclick="clearTrades()">Reset</button>
+        </div>
+        <div class="tlog" id="tLog" style="margin-top:12px;"><div style="color:var(--muted);text-align:center;padding:12px;font-size:11px;">No trades logged yet — execute your setup</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="col">
+    <div class="panel">
+      <div class="ph"><span class="ph-t gold">◈ Pre-Trade Checklist</span></div>
+      <div class="pb" id="cl2"></div>
+    </div>
+    <div class="panel">
+      <div class="ph"><span class="ph-t purple">◈ Funded Account Rules Status</span></div>
+      <div class="pb">
+        <div class="ci-row warn" id="ruleTarget"><div class="cdot warn"></div><div class="cn">Daily Target Status</div><div class="cv" id="ruleTargetVal" style="color:var(--muted);">$0 / $500</div></div>
+        <div class="ci-row pass" id="ruleLoss" style="margin-top:5px;"><div class="cdot pass"></div><div class="cn">Max Daily Loss</div><div class="cv" id="ruleLossVal" style="color:var(--green);">$0 / $200</div></div>
+        <div class="ci-row pass" style="margin-top:5px;"><div class="cdot pass"></div><div class="cn">News Filter Active</div><div class="cv" style="color:var(--green);">CLEAR</div></div>
+        <div class="ci-row pass" style="margin-top:5px;"><div class="cdot pass"></div><div class="cn">RR Filter (1:2 min)</div><div class="cv" style="color:var(--green);">ON</div></div>
+        <div class="ci-row pass" id="ruleConsec" style="margin-top:5px;"><div class="cdot pass"></div><div class="cn">Consecutive Losses</div><div class="cv" id="consecVal" style="color:var(--green);">0 / 3</div></div>
+        <div id="ruleAlert" style="margin-top:8px;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ══════════════════════════════════════
+     PAGE 7 — ANALYSIS
+══════════════════════════════════════ -->
+<div class="page" id="page-analysis">
+<div class="g2">
+  <div class="col">
+    <div class="panel">
+      <div class="ph"><span class="ph-t gold">◈ Today's AI Market Analysis</span><span id="aDate" style="font-size:9px;color:var(--muted);font-weight:700;"></span></div>
+      <div class="pb">
+        <div class="div-lbl">🌏 Asia Session Recap</div>
+        <div style="font-size:12px;line-height:1.75;margin-bottom:6px;">Asia traded <strong style="color:var(--red);">bearish and tight</strong>, ~56pt range. Nikkei and Hang Seng lower on risk-off flows. Asia HIGH at <strong style="color:var(--accent);">5,568</strong> = near-term resistance. Buy stops above this level were <strong style="color:var(--gold);">swept during pre-market</strong>, confirming institutional bearish intent.</div>
+        <div class="div-lbl">🇬🇧 London Session Recap</div>
+        <div style="font-size:12px;line-height:1.75;margin-bottom:6px;">London extended the bearish narrative, setting a <strong style="color:var(--red);">lower high vs Asia</strong>, ranging 66pts. Close below VWAP confirms <strong style="color:var(--accent);">institutional selling pressure</strong>. No meaningful bounce attempt. London low 5,488 = reference sell-stop pool.</div>
+        <div class="div-lbl">🇺🇸 US Session Prediction</div>
+        <div style="font-size:12px;line-height:1.75;margin-bottom:6px;">Expected range: <strong style="color:var(--accent);">5,460–5,560</strong> (~100pts). Bias <strong style="color:var(--red);">STRONGLY BEARISH</strong>. Anticipate dead-cat bounce to <strong style="color:var(--gold);">5,548–5,552 (20MA)</strong> as the institutional liquidity hunt phase, followed by the real move to 5,480–5,460.</div>
+        <div class="div-lbl">🎯 Expert AI Game Plan</div>
+        <div style="font-size:12px;line-height:1.75;margin-bottom:6px;"><strong style="color:var(--red);">PRIMARY:</strong> Watch for buy-stop sweep above ORB high in first 10 min. Once swept → enter SHORT at ORB high retest. SL above sweep wick. TP1=5,502, TP2=5,480, TP3=5,460.</div>
+        <div style="font-size:12px;line-height:1.75;margin-bottom:6px;"><strong style="color:var(--gold);">IF NO SWEEP:</strong> Wait for clean ORB break below 5,505 on 5-min close with volume. Enter short on retest. Same targets.</div>
+        <div style="font-size:12px;line-height:1.75;"><strong style="color:var(--green);">LONG CONDITION:</strong> Only if price reclaims AND holds above 5,560 (20MA) on 5-min close with expanding volume. Then target 5,590.</div>
+      </div>
+    </div>
+  </div>
+  <div class="col">
+    <div class="panel">
+      <div class="ph"><span class="ph-t">◈ Macro Context</span></div>
+      <div class="pb">
+        <div class="alert ad"><div class="ai-ico">📉</div><div><strong>FED HAWKISH HOLD:</strong> Restrictive policy maintained. Only 2 cuts projected for 2026. Higher-for-longer = headwind for equities. Macro bearish.</div></div>
+        <div class="alert aw"><div class="ai-ico">🌍</div><div><strong>GEOPOLITICAL RISK:</strong> Elevated risk premium. Oil above $100. Risk-off flows hurting equities, adds downside momentum.</div></div>
+        <div class="alert ai"><div class="ai-ico">📊</div><div><strong>TECHNICAL:</strong> ES trading below both 20 and 200MA with death cross active. Structure shows lower highs and lower lows. All timeframes aligned bearish.</div></div>
+        <div class="div"></div>
+        <div style="font-size:9px;color:var(--muted);letter-spacing:2px;font-weight:700;text-transform:uppercase;margin-bottom:10px;">Multi-Timeframe Bias</div>
+        <table style="width:100%;border-collapse:collapse;font-size:12px;">
+          <tr style="border-bottom:1px solid var(--dim);"><td style="padding:6px;font-size:9px;color:var(--muted);font-weight:700;text-transform:uppercase;">Monthly</td><td style="padding:6px;font-family:var(--font-mono);color:var(--red);">BEARISH ↓</td><td style="padding:6px;"><div style="width:100px;height:6px;background:var(--dim);border-radius:3px;overflow:hidden;"><div style="width:80%;height:100%;background:var(--red);border-radius:3px;"></div></div></td></tr>
+          <tr style="border-bottom:1px solid var(--dim);"><td style="padding:6px;font-size:9px;color:var(--muted);font-weight:700;text-transform:uppercase;">Weekly</td><td style="padding:6px;font-family:var(--font-mono);color:var(--red);">BEARISH ↓</td><td style="padding:6px;"><div style="width:100px;height:6px;background:var(--dim);border-radius:3px;overflow:hidden;"><div style="width:75%;height:100%;background:var(--red);border-radius:3px;"></div></div></td></tr>
+          <tr style="border-bottom:1px solid var(--dim);"><td style="padding:6px;font-size:9px;color:var(--muted);font-weight:700;text-transform:uppercase;">Daily</td><td style="padding:6px;font-family:var(--font-mono);color:var(--red);">BEARISH ↓</td><td style="padding:6px;"><div style="width:100px;height:6px;background:var(--dim);border-radius:3px;overflow:hidden;"><div style="width:85%;height:100%;background:var(--red);border-radius:3px;"></div></div></td></tr>
+          <tr style="border-bottom:1px solid var(--dim);"><td style="padding:6px;font-size:9px;color:var(--muted);font-weight:700;text-transform:uppercase;">4-Hour</td><td style="padding:6px;font-family:var(--font-mono);color:var(--red);">BEARISH ↓</td><td style="padding:6px;"><div style="width:100px;height:6px;background:var(--dim);border-radius:3px;overflow:hidden;"><div style="width:78%;height:100%;background:var(--red);border-radius:3px;"></div></div></td></tr>
+          <tr style="border-bottom:1px solid var(--dim);"><td style="padding:6px;font-size:9px;color:var(--muted);font-weight:700;text-transform:uppercase;">1-Hour</td><td style="padding:6px;font-family:var(--font-mono);color:var(--gold);">NEUTRAL</td><td style="padding:6px;"><div style="width:100px;height:6px;background:var(--dim);border-radius:3px;overflow:hidden;"><div style="width:50%;height:100%;background:var(--gold);border-radius:3px;"></div></div></td></tr>
+          <tr><td style="padding:6px;font-size:9px;color:var(--muted);font-weight:700;text-transform:uppercase;">5-Min</td><td style="padding:6px;font-family:var(--font-mono);color:var(--red);">BEARISH ↓</td><td style="padding:6px;"><div style="width:100px;height:6px;background:var(--dim);border-radius:3px;overflow:hidden;"><div style="width:70%;height:100%;background:var(--red);border-radius:3px;"></div></div></td></tr>
+        </table>
+        <div class="alert ag" style="margin-top:10px;"><div class="ai-ico">✅</div><div><strong>CONCLUSION:</strong> 5/6 timeframes bearish. 1-hour temporarily neutral (bounce potential). Ideal short-bias day. Trade shorts only unless hourly flips bullish.</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     JAVASCRIPT — DOMContentLoaded wrapped
+═══════════════════════════════════════ -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+
+  /* ─── PAGE NAV ─── */
+  window.goPage = function(name, el) {
+    document.querySelectorAll('.page').forEach(function(p){ p.classList.remove('active'); });
+    document.querySelectorAll('.ntab').forEach(function(t){ t.classList.remove('active'); });
+    var pg = document.getElementById('page-' + name);
+    if (pg) pg.classList.add('active');
+    if (el) el.classList.add('active');
+  };
+
+  /* ─── STRAT TABS ─── */
+  window.goStrat = function(name, el) {
+    document.querySelectorAll('.sc').forEach(function(c){ c.classList.remove('active'); });
+    document.querySelectorAll('.stab').forEach(function(t){ t.classList.remove('active'); });
+    var sc = document.getElementById('strat-' + name);
+    if (sc) sc.classList.add('active');
+    if (el) el.classList.add('active');
+  };
+
+  /* ─── CLOCK ─── */
+  function updateClock() {
+    try {
+      var now = new Date();
+      var et = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }));
+      var p = function(n){ return String(n).padStart(2,'0'); };
+      var clockEl = document.getElementById('clock');
+      if (clockEl) clockEl.textContent = p(et.getHours())+':'+p(et.getMinutes())+':'+p(et.getSeconds())+' ET';
+      var months = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+      var aDateEl = document.getElementById('aDate');
+      if (aDateEl) aDateEl.textContent = months[et.getMonth()]+' '+et.getDate()+' · '+et.getFullYear();
+      var tm = et.getHours()*60+et.getMinutes();
+      var pill = document.getElementById('sessionPill');
+      if (pill) {
+        if (tm>=570&&tm<960){ pill.textContent='🟢 US OPEN'; pill.style.borderColor='var(--green)'; pill.style.color='var(--green)'; }
+        else if (tm>=480&&tm<570){ pill.textContent='🟡 PRE-MARKET'; pill.style.borderColor='var(--gold)'; pill.style.color='var(--gold)'; }
+        else { pill.textContent='🔴 AFTER HRS'; pill.style.borderColor='var(--red)'; pill.style.color='var(--red)'; }
+      }
+    } catch(e) {}
+  }
+  setInterval(updateClock, 1000);
+  updateClock();
+
+  /* ─── ORB CALCULATOR ─── */
+  window.calcORB = function() {
+    var h = parseFloat(document.getElementById('inOrbH').value);
+    var l = parseFloat(document.getElementById('inOrbL').value);
+    var price = parseFloat(document.getElementById('inPrice').value);
+    var el = document.getElementById('orbResult');
+    if (!el) return;
+    if (isNaN(h)||isNaN(l)) { el.innerHTML='<div style="color:var(--muted);text-align:center;padding:10px;font-size:12px;">Enter both ORB levels</div>'; return; }
+    var range = h-l;
+    var tp1s = l-range, tp2s = l-range*2, sls = h+3;
+    var tp1l = h+range, tp2l = h+range*2, sll = l-3;
+    var dir = !isNaN(price) ? (price<l?'BEARISH — Below ORB':price>h?'BULLISH — Above ORB':'INSIDE ORB — Wait') : '—';
+    var dc = !isNaN(price) ? (price<l?'var(--red)':price>h?'var(--green)':'var(--gold)') : 'var(--muted)';
+    var ideal = range>=15&&range<=50;
+    el.innerHTML =
+      '<div class="lv p"><span class="ln">ORB High</span><span class="lp" style="color:var(--gold);">'+h.toFixed(2)+'</span></div>'+
+      '<div class="lv p"><span class="ln">ORB Low</span><span class="lp" style="color:var(--gold);">'+l.toFixed(2)+'</span></div>'+
+      '<div class="lv v"><span class="ln">ORB Range</span><span class="lp">'+range.toFixed(2)+' pts</span></div>'+
+      '<div style="margin:8px 0;padding:7px 10px;border-radius:4px;background:rgba(0,0,0,.3);font-size:12px;">Direction: <span style="font-family:var(--font-mono);color:'+dc+';">'+dir+'</span></div>'+
+      '<div style="font-size:9px;color:var(--red);letter-spacing:2px;font-weight:700;text-transform:uppercase;margin:8px 0 4px;">SHORT SETUP</div>'+
+      '<div class="lv r"><span class="ln">Entry (retest ORB low)</span><span class="lp">'+l.toFixed(2)+'</span></div>'+
+      '<div class="lv r"><span class="ln">Stop Loss</span><span class="lp">'+sls.toFixed(2)+'</span></div>'+
+      '<div class="lv s"><span class="ln">TP1 (1× range)</span><span class="lp">'+tp1s.toFixed(2)+'</span></div>'+
+      '<div class="lv s"><span class="ln">TP2 (2× range)</span><span class="lp">'+tp2s.toFixed(2)+'</span></div>'+
+      '<div style="font-size:9px;color:var(--green);letter-spacing:2px;font-weight:700;text-transform:uppercase;margin:8px 0 4px;">LONG SETUP</div>'+
+      '<div class="lv s"><span class="ln">Entry (retest ORB high)</span><span class="lp">'+h.toFixed(2)+'</span></div>'+
+      '<div class="lv r"><span class="ln">Stop Loss</span><span class="lp">'+sll.toFixed(2)+'</span></div>'+
+      '<div class="lv s"><span class="ln">TP1 (1× range)</span><span class="lp">'+tp1l.toFixed(2)+'</span></div>'+
+      '<div class="lv s"><span class="ln">TP2 (2× range)</span><span class="lp">'+tp2l.toFixed(2)+'</span></div>'+
+      '<div class="alert '+(ideal?'ag':'aw')+'" style="margin-top:8px;font-size:11px;"><div class="ai-ico">'+(ideal?'✅':'⚠')+'</div><div>Range: '+range.toFixed(0)+' pts — '+(ideal?'<strong>IDEAL (15–50pt)</strong>':'Suboptimal: adjust SL accordingly')+'<br>RR Short TP1: 1:'+((range/3).toFixed(1))+' &nbsp;|&nbsp; TP2: 1:'+((range*2/3).toFixed(1))+'</div></div>';
+    var orbHEl=document.getElementById('orbHDisp'), orbLEl=document.getElementById('orbLDisp');
+    if(orbHEl) orbHEl.textContent=h.toFixed(2);
+    if(orbLEl) orbLEl.textContent=l.toFixed(2);
+  };
+
+  /* ─── CHECKLISTS ─── */
+  var checkItems = [
+    'Asia + London range bias noted',
+    'Previous day high/low marked',
+    'ORB levels set (9:30–9:35 ET)',
+    'Economic calendar checked',
+    '20MA and 200MA direction confirmed',
+    'Institutional liquidity zones identified',
+    'Liquidity hunt confirmed before entry',
+    'Entry is ORB retest (not a chase)',
+    'Stop loss set BEFORE entry',
+    'Daily target and loss limit reviewed',
+  ];
+  var chks1 = checkItems.map(function(){ return false; });
+  var chks2 = checkItems.map(function(){ return false; });
+
+  function renderCL(id, arr) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    el.innerHTML = checkItems.map(function(lbl, i) {
+      return '<div class="check-item" onclick="toggleCk(\''+id+'\','+i+')">' +
+        '<div class="chk'+(arr[i]?' on':'')+'">✓</div>' +
+        '<span style="color:'+(arr[i]?'var(--green)':'var(--text)')+';">'+lbl+'</span>' +
+        '</div>';
+    }).join('');
+  }
+  window.toggleCk = function(id, i) {
+    if (id==='cl1') { chks1[i]=!chks1[i]; renderCL('cl1',chks1); }
+    else { chks2[i]=!chks2[i]; renderCL('cl2',chks2); }
+  };
+  renderCL('cl1', chks1);
+  renderCL('cl2', chks2);
+
+  /* ─── P&L TRACKER ─── */
+  var trades = [];
+  var consecL = 0;
+
+  window.logTrade = function() {
+    var dir = document.getElementById('tDir').value;
+    var setup = document.getElementById('tSetup').value;
+    var pnl = parseFloat(document.getElementById('tPnl').value);
+    if (isNaN(pnl)) return;
+    var et = new Date(new Date().toLocaleString('en-US',{timeZone:'America/New_York'}));
+    var p = function(n){return String(n).padStart(2,'0');};
+    var time = p(et.getHours())+':'+p(et.getMinutes());
+    trades.push({dir:dir, setup:setup, pnl:pnl, time:time});
+    if (pnl<0) consecL++; else consecL=0;
+    ['tEntry','tExit','tPnl'].forEach(function(id){ var el=document.getElementById(id); if(el) el.value=''; });
+    updatePnL();
+  };
+
+  window.clearTrades = function() {
+    if (confirm('Reset all trade data?')) { trades=[]; consecL=0; updatePnL(); }
+  };
+
+  function updatePnL() {
+    var total = trades.reduce(function(a,t){return a+t.pnl;},0);
+    var wins = trades.filter(function(t){return t.pnl>0;}).length;
+    var losses = trades.filter(function(t){return t.pnl<=0;}).length;
+    var pct = Math.min(Math.max(total/500*100,0),100);
+    var best = trades.length ? Math.max.apply(null,trades.map(function(t){return t.pnl;})) : null;
+    var worst = trades.length ? Math.min.apply(null,trades.map(function(t){return t.pnl;})) : null;
+    var maxLossUsed = Math.abs(Math.min(total,0));
+    var fmt = function(v){ return (v>=0?'+':'')+'$'+v.toFixed(2); };
+    var fmts = function(v){ return (v>=0?'+':'')+'$'+v.toFixed(0); };
+
+    function s(id,val,color){var el=document.getElementById(id);if(el){el.textContent=val;if(color)el.style.color=color;}}
+
+    s('bigPnl', fmt(total), total>=0?'var(--green)':'var(--red)');
+    s('bigRem', '$'+Math.max(0,500-total).toFixed(0));
+    s('maxLossRem', '$'+Math.max(0,200-maxLossUsed).toFixed(0));
+    var bf=document.getElementById('bigPfill'); if(bf){ bf.style.width=pct+'%'; bf.style.background=total>=500?'linear-gradient(90deg,var(--gold),#ffdd80)':'linear-gradient(90deg,var(--green),#00ffcc)'; }
+    s('tW',wins,'var(--green)'); s('tL',losses,'var(--red)');
+    s('tWR',trades.length?Math.round(wins/trades.length*100)+'%':'—%','var(--accent)');
+    s('tTotal',trades.length,'var(--bright)');
+    s('tBest',best!==null?fmts(best):'—','var(--green)');
+    s('tWorst',worst!==null?fmts(worst):'—','var(--red)');
+    s('hdrPnl',fmts(total),total>=0?'var(--green)':'var(--red)');
+    s('sWins',wins,'var(--green)'); s('sLoss',losses,'var(--red)');
+    s('sWR',trades.length?Math.round(wins/trades.length*100)+'%':'—%','var(--accent)');
+    s('sTrades',trades.length,'var(--bright)');
+    s('sPnl',(total>=0?'+':'')+'$'+total.toFixed(0),total>=0?'var(--green)':'var(--red)');
+    s('sRem','$'+Math.max(0,500-total).toFixed(0)+' left','var(--gold)');
+    var sp=document.getElementById('sPfill'); if(sp) sp.style.width=pct+'%';
+
+    // Rules status
+    var rt=document.getElementById('ruleTarget'), rtv=document.getElementById('ruleTargetVal');
+    var rl=document.getElementById('ruleLoss'), rlv=document.getElementById('ruleLossVal');
+    var rc=document.getElementById('ruleConsec'), cv=document.getElementById('consecVal');
+    var ra=document.getElementById('ruleAlert');
+
+    if(rtv) rtv.textContent='$'+total.toFixed(0)+' / $500';
+    if(rlv) rlv.textContent='$'+maxLossUsed.toFixed(0)+' / $200';
+    if(cv) cv.textContent=consecL+' / 3';
+
+    if(total>=500&&rt){ rt.className='ci-row pass'; rt.querySelector('.cdot').className='cdot pass'; if(ra) ra.innerHTML='<div class="alert ag"><div class="ai-ico">🎯</div><div><strong>DAILY TARGET HIT! $500 REACHED!</strong> Close the platform now. Protect your profits. Outstanding trading!</div></div>'; }
+    else if(rt){ rt.className='ci-row warn'; rt.querySelector('.cdot').className='cdot warn'; }
+
+    if(maxLossUsed>=200&&rl){ rl.className='ci-row fail'; rl.querySelector('.cdot').className='cdot fail'; if(ra) ra.innerHTML='<div class="alert ad"><div class="ai-ico">🚨</div><div><strong>MAX DAILY LOSS REACHED! STOP TRADING NOW.</strong> Close ALL positions. Live to trade tomorrow.</div></div>'; }
+    else if(maxLossUsed>=150&&rl){ rl.className='ci-row warn'; rl.querySelector('.cdot').className='cdot warn'; if(ra&&total<500) ra.innerHTML='<div class="alert aw"><div class="ai-ico">⚠</div><div>WARNING: $'+maxLossUsed.toFixed(0)+' of $200 used. Only $'+(200-maxLossUsed).toFixed(0)+' remaining. A+ setups only.</div></div>'; }
+    else if(rl){ rl.className='ci-row pass'; rl.querySelector('.cdot').className='cdot pass'; }
+
+    if(consecL>=3&&rc){ rc.className='ci-row fail'; rc.querySelector('.cdot').className='cdot fail'; if(ra) ra.innerHTML='<div class="alert ad"><div class="ai-ico">⏸</div><div><strong>3 CONSECUTIVE LOSSES — MANDATORY BREAK!</strong> Step away 30 minutes. Do NOT trade right now.</div></div>'; }
+    else if(rc){ rc.className='ci-row pass'; rc.querySelector('.cdot').className='cdot pass'; }
+
+    // Trade log
+    var log=document.getElementById('tLog');
+    if(!log) return;
+    if(!trades.length){ log.innerHTML='<div style="color:var(--muted);text-align:center;padding:12px;font-size:11px;">No trades logged yet</div>'; return; }
+    log.innerHTML=[].concat(trades).reverse().map(function(t){
+      return '<div class="te">'+
+        '<span style="color:var(--muted);width:48px;">'+t.time+'</span>'+
+        '<span style="width:55px;color:'+(t.dir==='long'?'var(--green)':'var(--red)')+';">'+t.dir.toUpperCase()+'</span>'+
+        '<span style="flex:1;font-size:11px;color:var(--muted);">'+t.setup+'</span>'+
+        '<span style="width:60px;text-align:right;font-family:var(--font-mono);color:'+(t.pnl>=0?'var(--green)':'var(--red)')+';">'+(t.pnl>=0?'+':'')+'$'+t.pnl.toFixed(0)+'</span>'+
+        '</div>';
+    }).join('');
+  }
+
+}); // end DOMContentLoaded
+</script>
+</body>
+</html>
